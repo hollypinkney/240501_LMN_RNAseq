@@ -1,0 +1,570 @@
+---
+title: "RNAseq Analysis"
+author: "Holly Pinkney"
+date: "2024-05-01"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+```{r packages, warning = FALSE, echo = TRUE, message = FALSE}
+library(DESeq2)
+library(edgeR)
+library(limma)
+library(systemPipeR)
+library(factoextra)
+library(tidyverse)
+library(gplots)
+library(rtracklayer)
+library(ggrepel)
+library(PoiClaClu)
+library(pheatmap)
+library(RColorBrewer)
+```
+
+# Setup
+Load in the sample sheet and counts files, convert the counts files to a matrix
+
+## 1. Sample sheet 
+This is based on the excel spreadsheet provided by Lisa. It also has some extra information which is used later in the analysis.
+```{r sampleSheet}
+sample_sheet <- read.csv("data/sample_sheet.csv")
+sample_sheet[1] <- NULL
+
+names(sample_sheet)[3] <- "Treatment"
+names(sample_sheet)[1] <- "LibraryID"
+
+#ensure the main comparisons are factors
+sample_sheet$Sex <- factor(sample_sheet$Sex)
+sample_sheet$Treatment <- factor(sample_sheet$Treatment)
+```
+
+## 2. Make counts matrix
+This uses counts outputs (.tab files) produced by STAR aligner using `--quantMode GeneCounts`. It is comparable to counts files produced by `HTseq count`. 
+```{r countsMatrix}
+# Get the counts files
+fileList <- list.files( path = "data/", pattern = "*ReadsPerGene.out.tab$", full.names = TRUE )
+
+# read in the table but skip the first 4 metadata lines
+counts.files <- lapply( fileList, read.table, skip = 4 )
+
+#grab the second column of the dataframe (unstranded counts)
+counts <- as.data.frame( sapply( counts.files, function(x) x[ , 2 ] ) )
+
+#create colnames for the counts matrix from the fileList:
+  #removing the long unnecessary strings and replacing them with nothing
+fileList <- gsub( "[_]ReadsPerGene[.]out[.]tab", "", fileList )
+fileList <- gsub( "data[/][/]", "", fileList )
+  # setting the colNames
+colnames(counts) <- fileList
+
+#add in the gene names as rownames (they are in the same order across all samples)
+row.names(counts) <- counts.files[[1]]$V1
+
+```
+
+# Visualisation of data
+```{r prepForVisualisation}
+# Get annotation info
+gtf <- rtracklayer::import('data/gencode.vM34.annotation.gtf')
+gtf_df = as.data.frame(gtf)
+gtf_df <- gtf_df %>% dplyr::select(gene_id, gene_name, seqnames)
+gtf_df <- unique(gtf_df)
+
+#make DEseq object to assist with viewing the data
+dds <- DESeqDataSetFromMatrix(countData = counts, 
+                              colData = sample_sheet, 
+                              design = ~ 0+Group) # Each sex has an associated treatment variable - see "Group" column in sample sheet
+
+#pre-filtering genes with less than 10 counts
+nrow(dds)
+smallestGroupSize <- 5 # number of samples in group
+keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+dds <- dds[keep,]
+nrow(dds) # this reduced the dataset from 57k genes to only 15k genes. 
+
+# normalisation 
+vst <- vst(dds, blind = F)
+```
+Pre-filtering steps reducted the genes to look at from 57k genes to only 15k genes. The genes were removed if they did not have 10 counts in at least 5 samples (the size of the sample group).
+A standard vst normalisation step is also performed, but this is just for visualising the data (DEseq runs this within the algorithm so will still feed it raw counts directly, EdgeR and Limma have their own recommended normalisation process).
+
+## Standard visualisation steps:
+### 1. Relative log expression
+This is used to look at overall differences in counts between the samples, which might indicate batch effects
+```{r RLE}
+# RLE plot
+logEst <- rlog(dds)
+median_counts <- apply(assay(logEst), 2, median) #gets the median counts per sample (i.e. column - specified as "2")
+rld_norm <- assay(logEst) - median_counts
+boxplot(rld_norm, las = 2)
+```
+The RLE plot looks good, there don't appear to be any batch effects
+
+### 2. Elbow plot
+An elbow plot is used to show the variation captured by each PC. 
+```{r elbow plot}
+# look at variability captured across PCs
+pca <- prcomp(t(assay(vst)))
+prop_var <- pca$sdev^2 / sum(pca$sdev^2)
+plot(prop_var, type = "b", xlab = "PC", ylab = "Proportion of Variance")
+```
+Looks as I would expect, with most of the variance in the data captured by the first 5 PCs.
+
+### 3. PCA
+The PCA plot is used to look similarity between samples. Based on this experiment, we would expect to see differences between males and females and would hope to see differences between treatment groups (HFHS dam and Control dam)
+```{r PCA}
+# plot PCA
+pcaData <- plotPCA(vst, intgroup = c("Treatment", "Sex"), returnData = TRUE)
+
+#sort out the labels - use RegEx to extract the digits that are after an underscore and before _ReadsPerGene
+pcaData <- pcaData %>%
+  mutate(LibID = str_extract(name, "(?<=_)(\\d+)$" ))
+pcaData$LibID <- ifelse(is.na(pcaData$LibID), "femextra", pcaData$LibID)
+
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+
+ggplot(pcaData, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+    ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+    coord_fixed() +
+    ggtitle("PCA plot") 
+```
+
+* The data aren't separating super well by treatment on the PCA plot. 
+* Sample 3 appears to be an outlier
+* The samples are separating by *something*, but if its sex dependent there are a few outliers to that as well - have the samples been mislabeled? 
+* Can check this by investigating the expression of X and Y chromosome genes. The Y chromosome expression will be ONLY in males, and high X will be females but keep in mind males will also have an X chromosome and therefore some degree of expression.
+
+## Extra visualisation steps:
+### Sex determination
+This is to check how well the X and Y gene expression matches with labelled sex. 
+```{r sexDetermination}
+#X or Y linked gene expression (to confirm sex of mice) (used normalised values)
+chrX_genes <- subset(gtf_df, seqnames %in% "chrX")
+chrY_genes <- subset(gtf_df, seqnames %in% "chrY")
+
+dds_filteredX <- vst[rownames(vst) %in% chrX_genes$gene_id, ]
+counts_X <- t(assay(dds_filteredX))
+average_exprX <- rowMeans(counts_X)
+median_exprX <- rowMedians(counts_X)
+
+dds_filteredY <- vst[rownames(vst) %in% chrY_genes$gene_id, ]
+counts_Y <- t(assay(dds_filteredY))
+average_exprY <- rowMeans(counts_Y)
+median_exprY <- rowMedians(counts_Y)
+
+plot_data <- data.frame(average_exprX, average_exprY, Sex = sample_sheet$Sex, LibID = sample_sheet$LibraryID)
+
+ggplot(plot_data, aes(x = average_exprX, y = average_exprY, shape = Sex)) +
+  geom_point(size = 3) +
+  labs(x = "Average normalised expression, X chromosome genes", y = "Average normalised expression, Y chromosome genes") +
+  geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+  theme_minimal() + 
+  geom_vline(xintercept = c(6.9, 6.75)) + 
+ geom_hline(yintercept = c(6, 4))
+```
+
+* Most samples match well to their assigned sex, but some are a bit unclear. The samples inside the top left corner are confidently male, the samples inside the bottom right are confidently female, the others don't have enough of a clear expression pattern to go one way or another. 
+* Sample 15 appears likely mislabeled.
+* Alternatively, the separation line could be on a diagonal from the bottom left corner up to the top right, which would separate all samples, leaving only sample 15 as the obvious problem.
+
+# Differential expression
+Will test the data using three different methods (DESeq2, EdgeR and limma), identifying differentially expressed genes from each and looking at the overlap between them.
+## DESeq2
+
+* DESeq2 uses a negative binomial distribution to model the count data, and does not assume genes are differentially expressed.
+* It uses a generalised linear model (GLM) to statistically assess differential expression.
+* All results are sorted by adjusted p-value.
+```{r DESeq}
+# Run Deseq
+dds <- DESeq(dds)
+resultsNames(dds)
+
+# Get the results for males
+male_res <- DESeq2::results(dds, c("Group", "Male.HFHS", "Male.Control"))
+male_res <- na.omit(male_res)
+male_res <- male_res[order(male_res$padj),]
+summary(male_res)
+
+male_res_outs <- rownames_to_column(as.data.frame(male_res), var = "gene_id")
+male_res_outs <- merge(male_res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+male_res_outs <- male_res_outs[order(male_res_outs$padj), ]
+head(male_res_outs)
+
+#Get the results for females
+female_res <- DESeq2::results(dds, c("Group", "Female.HFHS", "Female.Control"))
+female_res <- na.omit(female_res)
+female_res <- female_res[order(female_res$padj),]
+summary(female_res)
+
+female_res_outs <- rownames_to_column(as.data.frame(female_res), var = "gene_id")
+female_res_outs <- merge(female_res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+female_res_outs <- female_res_outs[order(female_res_outs$padj), ]
+head(female_res_outs)
+
+# Get the results for controls (sanity check)
+control_res <- DESeq2::results(dds, c("Group", "Male.Control", "Female.Control"))
+control_res <- na.omit(control_res)
+control_res <- control_res[order(control_res$padj),]
+summary(control_res)
+
+control_res_outs <- rownames_to_column(as.data.frame(control_res), var = "gene_id")
+control_res_outs <- merge(control_res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+control_res_outs <- control_res_outs[order(control_res_outs$padj), ]
+head(control_res_outs)
+
+# write out csvs for further investigation
+write.csv(male_res_outs, file = "output/male_HFHS_vs_Control_DESeq2.csv")
+write.csv(female_res_outs, file = "output/female_HFHS_vs_Control_DESeq2.csv")
+write.csv(control_res_outs, file = "output/sanity_check_M.Control_vs_F.Control_DESeq2.csv")
+
+# look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,3))
+
+hist(male_res$pvalue[male_res$baseMean > 1], breaks = 0:20/20, main="Male Res", xlab="P-value")
+hist(female_res$pvalue[female_res$baseMean > 1], breaks = 0:20/20, main="Female Res", xlab="P-value")
+hist(control_res$pvalue[control_res$baseMean > 1], breaks = 0:20/20, main="Control Res", xlab="P-value")
+
+par(mfrow=c(1,1))
+```
+
+* Noted very few significantly DE genes driving differences between both Male and Female HFHS & Control groups, also no significant differences for Male.Control vs Female.Control.
+* Raw p-value distribution is pretty funky for all except the Control Res panel which looks more as we would expect (although the dropoff is not as steep as we would see usually). 
+* This observation corresponds to the PCA plot where data didn't separate well. 
+
+## EdgeR
+
+* EdgeR also uses a negative binomial distribution to model the count data. It also does not assume any differentially expressed genes.
+* Similar to limma, it takes an empirical Bayes approach to statistical assessment of differential expression.
+* All results were sorted by adjusted p-value ("FDR"), however there were no significant genes, or variation in FDR adjusted p-value.
+* Because of this, results have been sorted by non-adjusted p-value in case any interesting genes pop up, despite not having a significant FDR adjusted p-value 
+```{r edgeR}
+# set up EdgeR obect
+y <- DGEList(counts = counts, group = sample_sheet$Group, samples = sample_sheet$LibraryID )
+nrow(y)
+
+# set up the design
+Group <- factor(paste(sample_sheet$Sex, sample_sheet$Treatment, sep = "."))
+design <- model.matrix(~0+Group)
+colnames(design) <- levels(Group)
+
+# filter out genes using EdgeRs filter by expression method.
+keep <- filterByExpr(y, design)
+table(keep)
+y <- y[keep, , keep.lib.sizes = FALSE]
+nrow(y) # EdgeR filtering is more stringent than DESeq
+
+# normalize for lib sizes
+y <- normLibSizes(y)
+
+# estimate dispersion
+y <- estimateDisp(y, design = design, robust = TRUE)
+y$common.dispersion
+
+# Test for DE genes - QL methods account for gene-specific variation
+fit <- glmQLFit(y, design = design, robust = TRUE)
+head(fit$coefficients)
+
+# setting up the comparison groups
+# compare Female HFHS to Female control and Male HFHS to Male control
+F.HFHSvsControl <- makeContrasts(Female.HFHS-Female.Control, levels = design)
+M.HFHSvsControl <- makeContrasts(Male.HFHS-Male.Control, levels = design)
+M.ControlvsF.Control <- makeContrasts(Male.Control-Female.Control, levels = design)
+
+F.res <- glmQLFTest(fit, contrast = F.HFHSvsControl)
+edgeR_F.res <- topTags(F.res, n=Inf)
+is.deF <- decideTestsDGE(F.res)
+summary(is.deF)
+
+M.res <- glmQLFTest(fit, contrast = M.HFHSvsControl)
+edgeR_M.res <- topTags(M.res, n= Inf)
+is.deM <- decideTestsDGE(M.res)
+summary(is.deM)
+
+Control.res <- glmQLFTest(fit, contrast = M.ControlvsF.Control)
+edgeR_Control.res <- topTags(Control.res, n = Inf)
+is.deCtrl <- decideTestsDGE(Control.res)
+summary(is.deCtrl)
+
+edgeR_f.res_outs <- rownames_to_column(as.data.frame(edgeR_F.res), var = "gene_id")
+edgeR_f.res_outs <- merge(edgeR_f.res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+edgeR_f.res_outs <- edgeR_f.res_outs[order(edgeR_f.res_outs$PValue), ]
+head(edgeR_f.res_outs)
+
+edgeR_m.res_outs <- rownames_to_column(as.data.frame(edgeR_M.res), var = "gene_id")
+edgeR_m.res_outs <- merge(edgeR_m.res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+edgeR_m.res_outs <- edgeR_m.res_outs[order(edgeR_m.res_outs$PValue), ]
+head(edgeR_m.res_outs)
+
+edgeR_Control.res_outs <- rownames_to_column(as.data.frame(edgeR_Control.res), var = "gene_id")
+edgeR_Control.res_outs <- merge(edgeR_Control.res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+edgeR_Control.res_outs <- edgeR_Control.res_outs[order(edgeR_Control.res_outs$PValue), ]
+head(edgeR_Control.res_outs)
+
+write.csv(edgeR_m.res_outs, file = "output/male_HFHS_vs_Control_EdgeR.csv")
+write.csv(edgeR_f.res_outs, file = "output/female_HFHS_vs_Control_EdgeR.csv")
+write.csv(edgeR_Control.res_outs, file = "output/sanity_check_M.Control_vs_F.Control_EdgeR.csv")
+
+# look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,3))
+
+hist(edgeR_M.res$table$PValue[edgeR_M.res$table$logCPM > 1], breaks = 0:20/20, main="Male Res", xlab="P-value")
+hist(edgeR_F.res$table$PValue[edgeR_F.res$table$logCPM > 1], breaks = 0:20/20, main="Female Res", xlab="P-value")
+hist(edgeR_Control.res$table$PValue[edgeR_Control.res$table$logCPM > 1], breaks = 0:20/20, main="Control Res", xlab="P-value")
+
+par(mfrow=c(1,1))
+```
+
+* Using EdgeR had very similar results to DEseq2, but found no significantly DE genes.
+* P-value distribution follows a similar concerning trend for the HFHS vs Control comparison for both males and females, but looks more as we would expect for Male.Control vs Female.Control (although the dropoff is not as steep as it would be usually).
+
+## Limma
+
+* Limma voom estimates the relationship between mean and variance in logCPM data, normalises it and then creates "precision weights" for each gene. 
+* It then takes an empirical Bayes approach to assessing differentially expressed genes (similar to EdgeR).
+* All results were sorted by adjusted p-value ("FDR"), however there were no significant genes, or variation in FDR adjusted p-value.
+* Because of this, results have been sorted by non-adjusted p-value in case any interesting genes pop up, despite not having a significant FDR adjusted p-value 
+```{r limma}
+# use same objects created with edgeR
+dge <- DGEList(counts = counts, group = sample_sheet$Group, samples = sample_sheet$LibraryID )
+
+# set up the design
+Group <- factor(paste(sample_sheet$Sex, sample_sheet$Treatment, sep = "."))
+design <- model.matrix(~0+Group)
+colnames(design) <- levels(Group)
+
+# filter out genes that have less than 10 counts in 5 or more groups
+keep <- filterByExpr(dge, design)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+
+
+# use voom to determine differential expression
+v <- voom(dge, design, plot = F)
+fit.limma <- lmFit(v, design)
+fit.limma <- eBayes(fit.limma)
+
+# contrasts (exactly the same as for edgeR)
+F.HFHSvsControl <- makeContrasts(Female.HFHS-Female.Control, levels = design)
+M.HFHSvsControl <- makeContrasts(Male.HFHS-Male.Control, levels = design)
+M.ControlvsF.Control <- makeContrasts(Male.Control-Female.Control, levels = design)
+
+f.fit <- contrasts.fit(fit.limma, contrasts = F.HFHSvsControl)
+f.fit <- eBayes(f.fit, trend = TRUE)
+summary(decideTests(f.fit, method="global", lfc = 2, p.value = 0.05, adjust.method = "fdr"))
+
+m.fit <- contrasts.fit(fit.limma, contrasts = M.HFHSvsControl)
+m.fit <- eBayes(m.fit, trend = TRUE)
+summary(decideTests(m.fit, method="global", lfc = 2, p.value = 0.05, adjust.method = "fdr"))
+
+ctrl.fit <- contrasts.fit(fit.limma, contrasts = M.ControlvsF.Control)
+ctrl.fit <- eBayes(ctrl.fit, trend = TRUE)
+summary(decideTests(ctrl.fit, method = "global", lfc = 2, p.value = 0.05, adjust.method = "fdr"))
+
+
+topGenes_female_limma <- topTable(f.fit, number = Inf, sort.by = "P")
+topGenes_male_limma <- topTable(m.fit, number = Inf, sort.by = "P")
+topGenes_control_limma <- topTable(ctrl.fit, number = Inf, sort.by = "P")
+
+limma_f.res_outs <- rownames_to_column(as.data.frame(topGenes_female_limma), var = "gene_id")
+limma_f.res_outs <- merge(limma_f.res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+limma_f.res_outs <- limma_f.res_outs[order(limma_f.res_outs$P.Value), ]
+
+limma_m.res_outs <- rownames_to_column(as.data.frame(topGenes_male_limma), var = "gene_id")
+limma_m.res_outs <- merge(limma_m.res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+limma_m.res_outs <- limma_m.res_outs[order(limma_m.res_outs$P.Value), ]
+
+limma_ctrl.res_outs <- rownames_to_column(as.data.frame(topGenes_control_limma), var = "gene_id")
+limma_ctrl.res_outs <- merge(limma_ctrl.res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+limma_ctrl.res_outs <- limma_ctrl.res_outs[order(limma_ctrl.res_outs$P.Value), ]
+
+write.csv(limma_f.res_outs, file = "output/female_genes_limma.csv")
+write.csv(limma_m.res_outs, file = "output/male_genes_limma.csv")
+write.csv(limma_ctrl.res_outs, file = "output/control_genes_limma.csv")
+
+# look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,3))
+
+hist(topGenes_male_limma$P.Value[topGenes_male_limma$AveExpr > 1], breaks = 0:20/20, main="Male Res", xlab="P-value")
+hist(topGenes_female_limma$P.Value[topGenes_female_limma$AveExpr > 1], breaks = 0:20/20, main="Female Res", xlab="P-value")
+hist(topGenes_control_limma$P.Value[topGenes_control_limma$AveExpr > 1], breaks = 0:20/20, main="Control Res", xlab="P-value")
+
+par(mfrow=c(1,1))
+
+```
+
+* Using limma, the control p-value distribution looks almost exactly as we would expect.
+* However, there are still no differentially expressed genes identified. 
+
+# Find the overlap between DESeq2, EdgeR and limma
+This is not the overlap between differentially expressed genes, because there were none. It is the overlap between the top 1000 genes identified as variable. Unsurprisingly, DESeq2, which is less stringent, identified a bunch of genes not found by edgeR and limma, and limma and edgeR, which share similar methodology, found many genes in common. 
+
+```{r overlap}
+
+setlist <- list(edgeR=edgeR_f.res_outs$gene_id[1:1000], DESeq2=female_res_outs$gene_id[1:1000], Limma=limma_f.res_outs$gene_id[1:1000])
+vennset <- overLapper(setlist=setlist[1:3], type = "vennsets")
+vennPlot(vennset, mymain = "overlap of top 100 identified genes")
+```
+
+# Retest with outliers removed
+Based on PCA, remove sample 3 from analysis and re-assess using DESeq2 (as it was the only method which was able to identify any DE genes)
+
+```{r retest}
+# Filter out sample 3
+outlier_sample <- which(colData(dds)$LibraryID=="3")
+dds_filt <- dds[,-outlier_sample]
+
+# normalise and view the PCA with it now removed
+vst_filt <- vst(dds_filt, blind = F)
+pcaFilt <- plotPCA(vst_filt, intgroup = c("Treatment", "Sex"), returnData = TRUE)
+
+#sort out the labels - use RegEx to extract the digits that are after the final underscore
+pcaFilt <- pcaFilt %>%
+  mutate(LibID = str_extract(name, "(?<=_)(\\d+)$" ))
+pcaFilt$LibID <- ifelse(is.na(pcaFilt$LibID), "femextra", pcaFilt$LibID)
+
+percentVarFilt <- round(100 * attr(pcaFilt, "percentVar"))
+
+ggplot(pcaFilt, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0("PC1: ", percentVarFilt[1], "% variance")) +
+    ylab(paste0("PC2: ", percentVarFilt[2], "% variance")) +
+    coord_fixed() +
+    ggtitle("PCA plot") 
+
+
+# Run Deseq on the filtered object
+dds_filt <- DESeq(dds_filt)
+resultsNames(dds_filt)
+
+# Get the results for males
+male_res_filt <- DESeq2::results(dds_filt, contrast=c("Group", "Male.HFHS", "Male.Control"))
+male_res_filt <- na.omit(male_res_filt)
+male_res_filt <- male_res_filt[order(male_res_filt$padj),]
+summary(male_res_filt)
+
+male_res_filt_outs <- rownames_to_column(as.data.frame(male_res_filt), var = "gene_id")
+male_res_filt_outs <- merge(male_res_filt_outs, gtf_df, by = "gene_id", all.x = TRUE)
+male_res_filt_outs <- male_res_filt_outs[order(male_res_filt_outs$padj), ] # while there aren't significant genes, there is variation in padj.
+head(male_res_filt_outs)
+
+#Get the results for females
+female_res_filt <- DESeq2::results(dds_filt, contrast=c("Group", "Female.HFHS", "Female.Control"))
+female_res_filt <- na.omit(female_res_filt)
+female_res_filt <- female_res_filt[order(female_res_filt$padj),]
+summary(female_res_filt)
+
+female_res_filt_outs <- rownames_to_column(as.data.frame(female_res_filt), var = "gene_id")
+female_res_filt_outs <- merge(female_res_filt_outs, gtf_df, by = "gene_id", all.x = TRUE)
+female_res_filt_outs <- female_res_filt_outs[order(female_res_filt_outs$padj), ] # while there aren't significant genes, there is variation in padj.
+head(female_res_filt_outs)
+
+# write out csvs
+write.csv(male_res_filt_outs, file = "output/male_filt_genes_HFHS_vs_Control_DESeq.csv")
+write.csv(female_res_filt_outs, file = "output/female_filt_genes_HFHS_vs_Control_DESeq.csv")
+```
+
+* This produced very similar results to the first analysis. 
+
+# What is driving the PCA groups identified?
+First, determine the degree of variation between the samples by calculating poisson distances, then calculate differentially expressed genes between groups.
+
+## Poisson distances
+Using raw counts to calculate poisson distances, but filtered for low expression. 
+```{r furtherChecks}
+# further check variability in the samples based on poisson distance
+
+poisd <- PoissonDistance(t(counts(dds_filt)))
+samplePoisDistMatrix <- as.matrix( poisd$dd )
+#colnames(samplePoisDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+
+pheatmap(samplePoisDistMatrix,
+         clustering_distance_rows = poisd$dd, 
+         clustering_distance_cols = poisd$dd, 
+         col = colors,main = "Poisson distances",
+         labels_row = sample_sheet$Group,
+        labels_col = sample_sheet$LibraryID)
+    
+
+```
+
+* This essentially shows what we saw on the PCA but a little bit more fine grained. Based on poisson distances between samples (library ID on x axis, sample group on y axis), there are two clear groups. 
+* When we group the data by whether it is in the first cluster at the top left or second cluster at the bottom right, we can view it on the PCA:
+
+```{r PoissonPCA}
+#plot PCA based on poisson group
+sample_sheet$Poisson.Group <- factor(sample_sheet$Poisson.Group)
+pcaFilt.poisson <- plotPCA(vst_filt, intgroup = c("Sex", "Treatment", "Poisson.Group"), returnData = TRUE)
+
+#sort out the labels - use RegEx to extract the digits that are after the final underscore
+pcaFilt.poisson <- pcaFilt.poisson %>%
+  mutate(LibID = str_extract(name, "(?<=_)(\\d+)$" ))
+pcaFilt.poisson$LibID <- ifelse(is.na(pcaFilt$LibID), "femextra", pcaFilt$LibID)
+
+percentVarFilt.poisson <- round(100 * attr(pcaFilt.poisson, "percentVar"))
+poisson_pca_cols <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(3)
+
+ggplot(pcaFilt.poisson, aes(x = PC1, y = PC2, shape = Sex, color = Poisson.Group)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    scale_color_manual(values = poisson_pca_cols)+
+    xlab(paste0("PC1: ", percentVarFilt[1], "% variance")) +
+    ylab(paste0("PC2: ", percentVarFilt[2], "% variance")) +
+    coord_fixed() +
+    ggtitle("PCA plot") 
+```
+
+* The poisson groups don't match perfectly to the PCA plot, but they're pretty close. 
+* To figure out what is driving these differences we can test for DE genes and look at associated go terms
+* Will use EdgeR to do this because it has an easy inbuilt tool (`goana`) for this purpose.
+
+## Run EdgeR on identified poisson groups
+```{r edgeRpoisson}
+# set up edgeR object
+y <- DGEList(counts = counts, group = sample_sheet$Poisson.Group, samples = sample_sheet$LibID )
+
+# filter out low counts as before
+keep <- filterByExpr(y)
+y <- y[keep, , keep.lib.sizes = FALSE]
+
+#filter out sample 3
+outlier_sample <- which(rownames(y$samples)=="03_trimmed_S250076152_L01_3")
+y_filt <- y[,-outlier_sample]
+
+# normalize for lib sizes
+y_filt <- normLibSizes(y_filt)
+
+# estimate dispersion
+y_filt <- estimateDisp(y_filt, robust = TRUE)
+
+# Test for DE genes - QL methods account for gene-specific variation
+fit <- glmQLFit(y_filt, robust = TRUE)
+res <- glmQLFTest(fit)
+is.de <- decideTestsDGE(res)
+summary(is.de)
+
+# EdgeR results outs
+res_outs <- rownames_to_column(as.data.frame(res), var = "gene_id")
+res_outs <- merge(res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+res_outs <- res_outs[order(res_outs$PValue), ]
+head(res_outs)
+write.csv(res_outs, file = "output/Poisson_groups_DEGenes_EdgeR.csv")
+
+# What differences are we actually testing? Look at go terms
+entrez <- as.character(res_outs$gene_id)
+go_results <- goana(entrez, species="Mm")
+topGO(go_results, p.value = 0.05)
+```
+
+* No statistically significant GO terms associated with DE genes between the two groups. 
+* Very likely testing noise
