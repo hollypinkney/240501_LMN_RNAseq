@@ -37,6 +37,8 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.4.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet" />
 
 <link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
 <!-- Add a small amount of space between sections. -->
@@ -341,7 +343,15 @@ div.tocify {
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a>
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/hollypinkney/240501_LMN_RNAseq">Source code</a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -513,15 +523,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree92b38214fba6888a5eba359985da9d5000e6fd9ftargetblank92b3821a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree125b1f37ce73e3ca4bc4402de4ae976550055af2targetblank125b1f3a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/92b38214fba6888a5eba359985da9d5000e6fd9f" target="_blank">92b3821</a>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/125b1f37ce73e3ca4bc4402de4ae976550055af2" target="_blank">125b1f3</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree92b38214fba6888a5eba359985da9d5000e6fd9ftargetblank92b3821a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree125b1f37ce73e3ca4bc4402de4ae976550055af2targetblank125b1f3a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -531,7 +541,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/92b38214fba6888a5eba359985da9d5000e6fd9f" target="_blank">92b3821</a>.
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/125b1f37ce73e3ca4bc4402de4ae976550055af2" target="_blank">125b1f3</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -592,6 +602,9 @@ Untracked files:
     Untracked:  output/sanity_check_M.Control_vs_F.Control_DESeq2.csv
     Untracked:  output/sanity_check_M.Control_vs_F.Control_EdgeR.csv
 
+Unstaged changes:
+    Modified:   analysis/_site.yml
+
 </code></pre>
 <p>
 Note that any generated files, e.g. HTML, png, CSS, etc., are not
@@ -636,6 +649,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/125b1f37ce73e3ca4bc4402de4ae976550055af2/analysis/RNAseq_analysis.Rmd" target="_blank">125b1f3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+<td>
+wflow_publish(files = "analysis/RNAseq_analysis.Rmd")
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/hollypinkney/240501_LMN_RNAseq/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/RNAseq_analysis.html" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -760,8 +807,46 @@ logEst &lt;- rlog(dds)
 median_counts &lt;- apply(assay(logEst), 2, median) #gets the median counts per sample (i.e. column - specified as &quot;2&quot;)
 rld_norm &lt;- assay(logEst) - median_counts
 boxplot(rld_norm, las = 2)</code></pre>
-<p><img src="figure/RNAseq_analysis.Rmd/RLE-1.png" width="672" style="display: block; margin: auto;" />
-The RLE plot looks good, there don’t appear to be any batch effects</p>
+<p><img src="figure/RNAseq_analysis.Rmd/RLE-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-RLE-1">
+Past versions of RLE-1.png
+</button>
+</p>
+<div id="fig-RLE-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/RLE-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The RLE plot looks good, there don’t appear to be any batch
+effects</p>
 </div>
 <div id="elbow-plot" class="section level3">
 <h3>2. Elbow plot</h3>
@@ -770,9 +855,46 @@ The RLE plot looks good, there don’t appear to be any batch effects</p>
 pca &lt;- prcomp(t(assay(vst)))
 prop_var &lt;- pca$sdev^2 / sum(pca$sdev^2)
 plot(prop_var, type = &quot;b&quot;, xlab = &quot;PC&quot;, ylab = &quot;Proportion of Variance&quot;)</code></pre>
-<p><img src="figure/RNAseq_analysis.Rmd/elbow%20plot-1.png" width="672" style="display: block; margin: auto;" />
-Looks as I would expect, with most of the variance in the data captured
-by the first 5 PCs.</p>
+<p><img src="figure/RNAseq_analysis.Rmd/elbow%20plot-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-no-spaces-elbow-plot-1">
+Past versions of "elbow plot-1.png"
+</button>
+</p>
+<div id="fig-no-spaces-elbow-plot-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/elbow plot-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Looks as I would expect, with most of the variance in the data
+captured by the first 5 PCs.</p>
 </div>
 <div id="pca" class="section level3">
 <h3>3. PCA</h3>
@@ -798,6 +920,43 @@ ggplot(pcaData, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) +
     coord_fixed() +
     ggtitle(&quot;PCA plot&quot;) </code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/PCA-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-PCA-1">
+Past versions of PCA-1.png
+</button>
+</p>
+<div id="fig-PCA-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/PCA-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <ul>
 <li>The data aren’t separating super well by treatment on the PCA
 plot.</li>
@@ -842,6 +1001,43 @@ ggplot(plot_data, aes(x = average_exprX, y = average_exprY, shape = Sex)) +
   geom_vline(xintercept = c(6.9, 6.75)) + 
  geom_hline(yintercept = c(6, 4))</code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/sexDetermination-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-sexDetermination-1">
+Past versions of sexDetermination-1.png
+</button>
+</p>
+<div id="fig-sexDetermination-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/sexDetermination-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <ul>
 <li>Most samples match well to their assigned sex, but some are a bit
 unclear. The samples inside the top left corner are confidently male,
@@ -990,6 +1186,43 @@ hist(male_res$pvalue[male_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Mal
 hist(female_res$pvalue[female_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Female Res&quot;, xlab=&quot;P-value&quot;)
 hist(control_res$pvalue[control_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Control Res&quot;, xlab=&quot;P-value&quot;)</code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/DESeq-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-DESeq-1">
+Past versions of DESeq-1.png
+</button>
+</p>
+<div id="fig-DESeq-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/DESeq-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre class="r"><code>par(mfrow=c(1,1))</code></pre>
 <ul>
 <li>Noted very few significantly DE genes driving differences between
@@ -1144,6 +1377,43 @@ hist(edgeR_M.res$table$PValue[edgeR_M.res$table$logCPM &gt; 1], breaks = 0:20/20
 hist(edgeR_F.res$table$PValue[edgeR_F.res$table$logCPM &gt; 1], breaks = 0:20/20, main=&quot;Female Res&quot;, xlab=&quot;P-value&quot;)
 hist(edgeR_Control.res$table$PValue[edgeR_Control.res$table$logCPM &gt; 1], breaks = 0:20/20, main=&quot;Control Res&quot;, xlab=&quot;P-value&quot;)</code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/edgeR-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-edgeR-1">
+Past versions of edgeR-1.png
+</button>
+</p>
+<div id="fig-edgeR-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/edgeR-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre class="r"><code>par(mfrow=c(1,1))</code></pre>
 <ul>
 <li>Using EdgeR had very similar results to DEseq2, but found no
@@ -1239,6 +1509,43 @@ hist(topGenes_male_limma$P.Value[topGenes_male_limma$AveExpr &gt; 1], breaks = 0
 hist(topGenes_female_limma$P.Value[topGenes_female_limma$AveExpr &gt; 1], breaks = 0:20/20, main=&quot;Female Res&quot;, xlab=&quot;P-value&quot;)
 hist(topGenes_control_limma$P.Value[topGenes_control_limma$AveExpr &gt; 1], breaks = 0:20/20, main=&quot;Control Res&quot;, xlab=&quot;P-value&quot;)</code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/limma-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-limma-1">
+Past versions of limma-1.png
+</button>
+</p>
+<div id="fig-limma-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/limma-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre class="r"><code>par(mfrow=c(1,1))</code></pre>
 <ul>
 <li>Using limma, the control p-value distribution looks almost exactly
@@ -1260,6 +1567,43 @@ edgeR, which share similar methodology, found many genes in common.</p>
 vennset &lt;- overLapper(setlist=setlist[1:3], type = &quot;vennsets&quot;)
 vennPlot(vennset, mymain = &quot;overlap of top 100 identified genes&quot;)</code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/overlap-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-overlap-1">
+Past versions of overlap-1.png
+</button>
+</p>
+<div id="fig-overlap-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/overlap-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="retest-with-outliers-removed" class="section level1">
 <h1>Retest with outliers removed</h1>
@@ -1289,6 +1633,43 @@ ggplot(pcaFilt, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) +
     coord_fixed() +
     ggtitle(&quot;PCA plot&quot;) </code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/retest-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-retest-1">
+Past versions of retest-1.png
+</button>
+</p>
+<div id="fig-retest-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/retest-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre class="r"><code># Run Deseq on the filtered object
 dds_filt &lt;- DESeq(dds_filt)</code></pre>
 <pre><code>using pre-existing size factors</code></pre>
@@ -1398,6 +1779,43 @@ pheatmap(samplePoisDistMatrix,
          labels_row = sample_sheet$Group,
         labels_col = sample_sheet$LibraryID)</code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/furtherChecks-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-furtherChecks-1">
+Past versions of furtherChecks-1.png
+</button>
+</p>
+<div id="fig-furtherChecks-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/furtherChecks-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <ul>
 <li>This essentially shows what we saw on the PCA but a little bit more
 fine grained. Based on poisson distances between samples (library ID on
@@ -1427,6 +1845,43 @@ ggplot(pcaFilt.poisson, aes(x = PC1, y = PC2, shape = Sex, color = Poisson.Group
     coord_fixed() +
     ggtitle(&quot;PCA plot&quot;) </code></pre>
 <p><img src="figure/RNAseq_analysis.Rmd/PoissonPCA-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-PoissonPCA-1">
+Past versions of PoissonPCA-1.png
+</button>
+</p>
+<div id="fig-PoissonPCA-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/1022be390d0b7c6e8edc8e42398c2b132e58bc2b/docs/figure/RNAseq_analysis.Rmd/PoissonPCA-1.png" target="_blank">1022be3</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <ul>
 <li>The poisson groups don’t match perfectly to the PCA plot, but
 they’re pretty close.</li>
@@ -1491,6 +1946,50 @@ go_results &lt;- goana(entrez, species=&quot;Mm&quot;)
 topGO(go_results, p.value = 0.05)</code></pre>
 <pre><code>[1] Term Ont  N    DE   P.DE
 &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code># Not significant go terms:
+topGO(go_results)</code></pre>
+<pre><code>                                                                                                                 Term
+GO:0070060                                                                        &#39;de novo&#39; actin filament nucleation
+GO:0051083                                                                  &#39;de novo&#39; cotranslational protein folding
+GO:0001874                                                              (1-&gt;3)-beta-D-glucan immune receptor activity
+GO:0019171                                               (3R)-hydroxyacyl-[acyl-carrier-protein] dehydratase activity
+GO:0008659                                          (3R)-hydroxymyristoyl-[acyl-carrier-protein] dehydratase activity
+GO:0003947                 (N-acetylneuraminyl)-galactosylglucosylceramide N-acetylgalactosaminyltransferase activity
+GO:0051990                                                              (R)-2-hydroxyglutarate dehydrogenase activity
+GO:0047305                                              (R)-3-amino-2-methylpropionate-pyruvate transaminase activity
+GO:0070626 (S)-2-(5-amino-1-(5-phospho-D-ribosyl)imidazole-4-carboxamido) succinate lyase (fumarate-forming) activity
+GO:0047298                                                       (S)-3-amino-2-methylpropionate transaminase activity
+GO:0047777                                                                          (S)-citramalyl-CoA lyase activity
+GO:0047323                              [3-methyl-2-oxobutanoate dehydrogenase (acetyl-transferring)] kinase activity
+GO:0004313                                                        [acyl-carrier-protein] S-acetyltransferase activity
+GO:0033871                                                [heparan sulfate]-glucosamine 3-sulfotransferase 2 activity
+GO:0033872                                                [heparan sulfate]-glucosamine 3-sulfotransferase 3 activity
+GO:0030586                                                                   [methionine synthase] reductase activity
+GO:0102167                 [protein]-3-O-(N-acetyl-D-glucosaminyl)-L-serine O-N-acetyl-alpha-D-glucosaminase activity
+GO:0102571     [protein]-3-O-(N-acetyl-D-glucosaminyl)-L-serine/L-threonine O-N-acetyl-alpha-D-glucosaminase activity
+GO:0102166              [protein]-3-O-(N-acetyl-D-glucosaminyl)-L-threonine O-N-acetyl-alpha-D-glucosaminase activity
+GO:0036140                                                                [protein]-asparagine 3-dioxygenase activity
+           Ont N DE P.DE
+GO:0070060  BP 1  0    1
+GO:0051083  BP 1  0    1
+GO:0001874  MF 1  0    1
+GO:0019171  MF 1  0    1
+GO:0008659  MF 1  0    1
+GO:0003947  MF 1  0    1
+GO:0051990  MF 1  0    1
+GO:0047305  MF 1  0    1
+GO:0070626  MF 1  0    1
+GO:0047298  MF 1  0    1
+GO:0047777  MF 1  0    1
+GO:0047323  MF 1  0    1
+GO:0004313  MF 1  0    1
+GO:0033871  MF 1  0    1
+GO:0033872  MF 1  0    1
+GO:0030586  MF 1  0    1
+GO:0102167  MF 1  0    1
+GO:0102571  MF 1  0    1
+GO:0102166  MF 1  0    1
+GO:0036140  MF 1  0    1</code></pre>
 <ul>
 <li>No statistically significant GO terms associated with DE genes
 between the two groups.</li>
