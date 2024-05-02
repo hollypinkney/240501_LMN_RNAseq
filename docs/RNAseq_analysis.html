@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Holly Pinkney" />
+
+<meta name="date" content="2024-05-01" />
+
+<title>RNAseq Analysis</title>
+
+<script src="site_libs/header-attrs-2.26/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">LMN_RNAseq</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">RNAseq Analysis</h1>
+<h4 class="author">Holly Pinkney</h4>
+<h4 class="date">2024-05-01</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2024-05-02
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>240501_LMN_RNAseq/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.1). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20240501code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20240501)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20240501code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20240501)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree92b38214fba6888a5eba359985da9d5000e6fd9ftargetblank92b3821a">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/92b38214fba6888a5eba359985da9d5000e6fd9f" target="_blank">92b3821</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree92b38214fba6888a5eba359985da9d5000e6fd9ftargetblank92b3821a"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/92b38214fba6888a5eba359985da9d5000e6fd9f" target="_blank">92b3821</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+
+Untracked files:
+    Untracked:  code/STAR.sh
+    Untracked:  code/cutadapt.sh
+    Untracked:  code/fastqc.sh
+    Untracked:  data/01_trimmed_S250076152_L01_1_ReadsPerGene.out.tab
+    Untracked:  data/02_trimmed_S250076152_L01_2_ReadsPerGene.out.tab
+    Untracked:  data/03_trimmed_S250076152_L01_3_ReadsPerGene.out.tab
+    Untracked:  data/04_trimmed_S250076152_L01_4_ReadsPerGene.out.tab
+    Untracked:  data/05_trimmed_S250076152_L01_6_ReadsPerGene.out.tab
+    Untracked:  data/06_trimmed_S250076152_L01_7_ReadsPerGene.out.tab
+    Untracked:  data/07_trimmed_S250076152_L01_8_ReadsPerGene.out.tab
+    Untracked:  data/08_trimmed_S250076152_L01_9_ReadsPerGene.out.tab
+    Untracked:  data/09_trimmed_S250076152_L01_10_ReadsPerGene.out.tab
+    Untracked:  data/10_trimmed_S250076152_L01_12_ReadsPerGene.out.tab
+    Untracked:  data/11_trimmed_S250076152_L01_13_ReadsPerGene.out.tab
+    Untracked:  data/12_trimmed_S250076152_L01_15_ReadsPerGene.out.tab
+    Untracked:  data/13_trimmed_S250076152_L01_17_ReadsPerGene.out.tab
+    Untracked:  data/14_trimmed_S250076152_L01_18_ReadsPerGene.out.tab
+    Untracked:  data/15_trimmed_S250076152_L01_19_ReadsPerGene.out.tab
+    Untracked:  data/16_trimmed_S250076152_L01_20_ReadsPerGene.out.tab
+    Untracked:  data/17_trimmed_S250076152_L01_21_ReadsPerGene.out.tab
+    Untracked:  data/18_trimmed_S250076152_L01_23_ReadsPerGene.out.tab
+    Untracked:  data/19_trimmed_S250076152_L01_24_ReadsPerGene.out.tab
+    Untracked:  data/20_trimmed_S250076152_L01_Femextra_ReadsPerGene.out.tab
+    Untracked:  data/Sample ID_8 week offspring beta-cells_mRNA-seq.xlsx
+    Untracked:  data/gencode.vM34.annotation.gtf
+    Untracked:  data/sample_sheet.csv
+    Untracked:  output/Poisson_groups_DEGenes_EdgeR.csv
+    Untracked:  output/control_genes_limma.csv
+    Untracked:  output/female_HFHS_vs_Control_DESeq2.csv
+    Untracked:  output/female_HFHS_vs_Control_EdgeR.csv
+    Untracked:  output/female_filt_genes_HFHS_vs_Control_DESeq.csv
+    Untracked:  output/female_genes_HFHS_vs_Control.csv
+    Untracked:  output/female_genes_limma.csv
+    Untracked:  output/male_HFHS_vs_Control_DESeq2.csv
+    Untracked:  output/male_HFHS_vs_Control_EdgeR.csv
+    Untracked:  output/male_filt_genes_HFHS_vs_Control_DESeq.csv
+    Untracked:  output/male_genes_HFHS_vs_Control.csv
+    Untracked:  output/male_genes_limma.csv
+    Untracked:  output/sanity_check_M.Control_vs_F.Control_DESeq2.csv
+    Untracked:  output/sanity_check_M.Control_vs_F.Control_EdgeR.csv
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/RNAseq_analysis.Rmd</code>) and
+HTML (<code>docs/RNAseq_analysis.html</code>) files. If you’ve
+configured a remote Git repository (see <code>?wflow_git_remote</code>),
+click on the hyperlinks in the table below to view the files as they
+were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/92b38214fba6888a5eba359985da9d5000e6fd9f/analysis/RNAseq_analysis.Rmd" target="_blank">92b3821</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+<td>
+wflow_publish(files = "analysis/RNAseq_analysis.Rmd")
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="load-packages" class="section level1">
+<h1>Load packages</h1>
+<pre class="r"><code>library(DESeq2)
+library(edgeR)
+library(limma)
+library(systemPipeR)
+library(factoextra)
+library(tidyverse)
+library(gplots)
+library(rtracklayer)
+library(ggrepel)
+library(PoiClaClu)
+library(pheatmap)
+library(RColorBrewer)</code></pre>
+</div>
+<div id="setup" class="section level1">
+<h1>Setup</h1>
+<p>Load in the sample sheet and counts files, convert the counts files
+to a matrix</p>
+<div id="sample-sheet" class="section level2">
+<h2>1. Sample sheet</h2>
+<p>This is based on the excel spreadsheet provided by Lisa. It also has
+some extra information which is used later in the analysis.</p>
+<pre class="r"><code>sample_sheet &lt;- read.csv(&quot;data/sample_sheet.csv&quot;)
+sample_sheet[1] &lt;- NULL
+
+names(sample_sheet)[3] &lt;- &quot;Treatment&quot;
+names(sample_sheet)[1] &lt;- &quot;LibraryID&quot;
+
+#ensure the main comparisons are factors
+sample_sheet$Sex &lt;- factor(sample_sheet$Sex)
+sample_sheet$Treatment &lt;- factor(sample_sheet$Treatment)</code></pre>
+</div>
+<div id="make-counts-matrix" class="section level2">
+<h2>2. Make counts matrix</h2>
+<p>This uses counts outputs (.tab files) produced by STAR aligner using
+<code>--quantMode GeneCounts</code>. It is comparable to counts files
+produced by <code>HTseq count</code>.</p>
+<pre class="r"><code># Get the counts files
+fileList &lt;- list.files( path = &quot;data/&quot;, pattern = &quot;*ReadsPerGene.out.tab$&quot;, full.names = TRUE )
+
+# read in the table but skip the first 4 metadata lines
+counts.files &lt;- lapply( fileList, read.table, skip = 4 )
+
+#grab the second column of the dataframe (unstranded counts)
+counts &lt;- as.data.frame( sapply( counts.files, function(x) x[ , 2 ] ) )
+
+#create colnames for the counts matrix from the fileList:
+  #removing the long unnecessary strings and replacing them with nothing
+fileList &lt;- gsub( &quot;[_]ReadsPerGene[.]out[.]tab&quot;, &quot;&quot;, fileList )
+fileList &lt;- gsub( &quot;data[/][/]&quot;, &quot;&quot;, fileList )
+  # setting the colNames
+colnames(counts) &lt;- fileList
+
+#add in the gene names as rownames (they are in the same order across all samples)
+row.names(counts) &lt;- counts.files[[1]]$V1</code></pre>
+</div>
+</div>
+<div id="visualisation-of-data" class="section level1">
+<h1>Visualisation of data</h1>
+<pre class="r"><code># Get annotation info
+gtf &lt;- rtracklayer::import(&#39;data/gencode.vM34.annotation.gtf&#39;)
+gtf_df = as.data.frame(gtf)
+gtf_df &lt;- gtf_df %&gt;% dplyr::select(gene_id, gene_name, seqnames)
+gtf_df &lt;- unique(gtf_df)
+
+#make DEseq object to assist with viewing the data
+dds &lt;- DESeqDataSetFromMatrix(countData = counts, 
+                              colData = sample_sheet, 
+                              design = ~ 0+Group) # Each sex has an associated treatment variable - see &quot;Group&quot; column in sample sheet</code></pre>
+<pre><code>Warning in DESeqDataSet(se, design = design, ignoreRank): some variables in
+design formula are characters, converting to factors</code></pre>
+<pre class="r"><code>#pre-filtering genes with less than 10 counts
+nrow(dds)</code></pre>
+<pre><code>[1] 57126</code></pre>
+<pre class="r"><code>smallestGroupSize &lt;- 5 # number of samples in group
+keep &lt;- rowSums(counts(dds) &gt;= 10) &gt;= smallestGroupSize
+dds &lt;- dds[keep,]
+nrow(dds) # this reduced the dataset from 57k genes to only 15k genes. </code></pre>
+<pre><code>[1] 15170</code></pre>
+<pre class="r"><code># normalisation 
+vst &lt;- vst(dds, blind = F)</code></pre>
+<p>Pre-filtering steps reducted the genes to look at from 57k genes to
+only 15k genes. The genes were removed if they did not have 10 counts in
+at least 5 samples (the size of the sample group). A standard vst
+normalisation step is also performed, but this is just for visualising
+the data (DEseq runs this within the algorithm so will still feed it raw
+counts directly, EdgeR and Limma have their own recommended
+normalisation process).</p>
+<div id="standard-visualisation-steps" class="section level2">
+<h2>Standard visualisation steps:</h2>
+<div id="relative-log-expression" class="section level3">
+<h3>1. Relative log expression</h3>
+<p>This is used to look at overall differences in counts between the
+samples, which might indicate batch effects</p>
+<pre class="r"><code># RLE plot
+logEst &lt;- rlog(dds)
+median_counts &lt;- apply(assay(logEst), 2, median) #gets the median counts per sample (i.e. column - specified as &quot;2&quot;)
+rld_norm &lt;- assay(logEst) - median_counts
+boxplot(rld_norm, las = 2)</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/RLE-1.png" width="672" style="display: block; margin: auto;" />
+The RLE plot looks good, there don’t appear to be any batch effects</p>
+</div>
+<div id="elbow-plot" class="section level3">
+<h3>2. Elbow plot</h3>
+<p>An elbow plot is used to show the variation captured by each PC.</p>
+<pre class="r"><code># look at variability captured across PCs
+pca &lt;- prcomp(t(assay(vst)))
+prop_var &lt;- pca$sdev^2 / sum(pca$sdev^2)
+plot(prop_var, type = &quot;b&quot;, xlab = &quot;PC&quot;, ylab = &quot;Proportion of Variance&quot;)</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/elbow%20plot-1.png" width="672" style="display: block; margin: auto;" />
+Looks as I would expect, with most of the variance in the data captured
+by the first 5 PCs.</p>
+</div>
+<div id="pca" class="section level3">
+<h3>3. PCA</h3>
+<p>The PCA plot is used to look similarity between samples. Based on
+this experiment, we would expect to see differences between males and
+females and would hope to see differences between treatment groups (HFHS
+dam and Control dam)</p>
+<pre class="r"><code># plot PCA
+pcaData &lt;- plotPCA(vst, intgroup = c(&quot;Treatment&quot;, &quot;Sex&quot;), returnData = TRUE)</code></pre>
+<pre><code>using ntop=500 top features by variance</code></pre>
+<pre class="r"><code>#sort out the labels - use RegEx to extract the digits that are after an underscore and before _ReadsPerGene
+pcaData &lt;- pcaData %&gt;%
+  mutate(LibID = str_extract(name, &quot;(?&lt;=_)(\\d+)$&quot; ))
+pcaData$LibID &lt;- ifelse(is.na(pcaData$LibID), &quot;femextra&quot;, pcaData$LibID)
+
+percentVar &lt;- round(100 * attr(pcaData, &quot;percentVar&quot;))
+
+ggplot(pcaData, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0(&quot;PC1: &quot;, percentVar[1], &quot;% variance&quot;)) +
+    ylab(paste0(&quot;PC2: &quot;, percentVar[2], &quot;% variance&quot;)) +
+    coord_fixed() +
+    ggtitle(&quot;PCA plot&quot;) </code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/PCA-1.png" width="672" style="display: block; margin: auto;" /></p>
+<ul>
+<li>The data aren’t separating super well by treatment on the PCA
+plot.</li>
+<li>Sample 3 appears to be an outlier</li>
+<li>The samples are separating by <em>something</em>, but if its sex
+dependent there are a few outliers to that as well - have the samples
+been mislabeled?</li>
+<li>Can check this by investigating the expression of X and Y chromosome
+genes. The Y chromosome expression will be ONLY in males, and high X
+will be females but keep in mind males will also have an X chromosome
+and therefore some degree of expression.</li>
+</ul>
+</div>
+</div>
+<div id="extra-visualisation-steps" class="section level2">
+<h2>Extra visualisation steps:</h2>
+<div id="sex-determination" class="section level3">
+<h3>Sex determination</h3>
+<p>This is to check how well the X and Y gene expression matches with
+labelled sex.</p>
+<pre class="r"><code>#X or Y linked gene expression (to confirm sex of mice) (used normalised values)
+chrX_genes &lt;- subset(gtf_df, seqnames %in% &quot;chrX&quot;)
+chrY_genes &lt;- subset(gtf_df, seqnames %in% &quot;chrY&quot;)
+
+dds_filteredX &lt;- vst[rownames(vst) %in% chrX_genes$gene_id, ]
+counts_X &lt;- t(assay(dds_filteredX))
+average_exprX &lt;- rowMeans(counts_X)
+median_exprX &lt;- rowMedians(counts_X)
+
+dds_filteredY &lt;- vst[rownames(vst) %in% chrY_genes$gene_id, ]
+counts_Y &lt;- t(assay(dds_filteredY))
+average_exprY &lt;- rowMeans(counts_Y)
+median_exprY &lt;- rowMedians(counts_Y)
+
+plot_data &lt;- data.frame(average_exprX, average_exprY, Sex = sample_sheet$Sex, LibID = sample_sheet$LibraryID)
+
+ggplot(plot_data, aes(x = average_exprX, y = average_exprY, shape = Sex)) +
+  geom_point(size = 3) +
+  labs(x = &quot;Average normalised expression, X chromosome genes&quot;, y = &quot;Average normalised expression, Y chromosome genes&quot;) +
+  geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+  theme_minimal() + 
+  geom_vline(xintercept = c(6.9, 6.75)) + 
+ geom_hline(yintercept = c(6, 4))</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/sexDetermination-1.png" width="672" style="display: block; margin: auto;" /></p>
+<ul>
+<li>Most samples match well to their assigned sex, but some are a bit
+unclear. The samples inside the top left corner are confidently male,
+the samples inside the bottom right are confidently female, the others
+don’t have enough of a clear expression pattern to go one way or
+another.</li>
+<li>Sample 15 appears likely mislabeled.</li>
+<li>Alternatively, the separation line could be on a diagonal from the
+bottom left corner up to the top right, which would separate all
+samples, leaving only sample 15 as the obvious problem.</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="differential-expression" class="section level1">
+<h1>Differential expression</h1>
+<p>Will test the data using three different methods (DESeq2, EdgeR and
+limma), identifying differentially expressed genes from each and looking
+at the overlap between them. ## DESeq2</p>
+<ul>
+<li>DESeq2 uses a negative binomial distribution to model the count
+data, and does not assume genes are differentially expressed.</li>
+<li>It uses a generalised linear model (GLM) to statistically assess
+differential expression.</li>
+<li>All results are sorted by adjusted p-value.</li>
+</ul>
+<pre class="r"><code># Run Deseq
+dds &lt;- DESeq(dds)</code></pre>
+<pre><code>estimating size factors</code></pre>
+<pre><code>estimating dispersions</code></pre>
+<pre><code>gene-wise dispersion estimates</code></pre>
+<pre><code>mean-dispersion relationship</code></pre>
+<pre><code>final dispersion estimates</code></pre>
+<pre><code>fitting model and testing</code></pre>
+<pre class="r"><code>resultsNames(dds)</code></pre>
+<pre><code>[1] &quot;GroupFemale.Control&quot; &quot;GroupFemale.HFHS&quot;    &quot;GroupMale.Control&quot;  
+[4] &quot;GroupMale.HFHS&quot;     </code></pre>
+<pre class="r"><code># Get the results for males
+male_res &lt;- DESeq2::results(dds, c(&quot;Group&quot;, &quot;Male.HFHS&quot;, &quot;Male.Control&quot;))
+male_res &lt;- na.omit(male_res)
+male_res &lt;- male_res[order(male_res$padj),]
+summary(male_res)</code></pre>
+<pre><code>
+out of 15144 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 1, 0.0066%
+LFC &lt; 0 (down)     : 4, 0.026%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 2)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<pre class="r"><code>male_res_outs &lt;- rownames_to_column(as.data.frame(male_res), var = &quot;gene_id&quot;)
+male_res_outs &lt;- merge(male_res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+male_res_outs &lt;- male_res_outs[order(male_res_outs$padj), ]
+head(male_res_outs)</code></pre>
+<pre><code>                   gene_id baseMean log2FoldChange     lfcSE      stat
+65   ENSMUSG00000000530.17 45.58601      -5.028156 1.0913049 -4.607471
+1861  ENSMUSG00000020357.4 36.09737      -6.951714 1.5249967 -4.558511
+3345 ENSMUSG00000024421.17 14.93355      -5.771963 1.2709315 -4.541522
+4668 ENSMUSG00000027797.16 25.32360       2.072039 0.4571223  4.532790
+7900 ENSMUSG00000037754.14 15.29509      -5.516006 1.2932172 -4.265336
+4324 ENSMUSG00000026921.21 60.03005      -4.155105 1.0486056 -3.962505
+           pvalue       padj gene_name seqnames
+65   4.075965e-06 0.02203814    Acvrl1    chr15
+1861 5.151768e-06 0.02203814      Flt4    chr11
+3345 5.584966e-06 0.02203814     Lama3    chr18
+4668 5.820956e-06 0.02203814     Dclk1     chr3
+7900 1.996017e-05 0.06045536  Ppp1r16b     chr2
+4324 7.416732e-05 0.16045570     Egfl7     chr2</code></pre>
+<pre class="r"><code>#Get the results for females
+female_res &lt;- DESeq2::results(dds, c(&quot;Group&quot;, &quot;Female.HFHS&quot;, &quot;Female.Control&quot;))
+female_res &lt;- na.omit(female_res)
+female_res &lt;- female_res[order(female_res$padj),]
+summary(female_res)</code></pre>
+<pre><code>
+out of 15144 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 0, 0%
+LFC &lt; 0 (down)     : 1, 0.0066%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 2)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<pre class="r"><code>female_res_outs &lt;- rownames_to_column(as.data.frame(female_res), var = &quot;gene_id&quot;)
+female_res_outs &lt;- merge(female_res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+female_res_outs &lt;- female_res_outs[order(female_res_outs$padj), ]
+head(female_res_outs)</code></pre>
+<pre><code>                   gene_id   baseMean log2FoldChange     lfcSE       stat
+8350 ENSMUSG00000039278.11 283.076031    -5.52176210 1.0267029 -5.3781501
+1     ENSMUSG00000000001.5 863.134444     0.06304212 0.6152529  0.1024654
+2    ENSMUSG00000000028.16  18.019627    -0.06688485 0.4415509 -0.1514771
+3    ENSMUSG00000000037.18   4.751364    -0.16285554 0.7099296 -0.2293967
+4     ENSMUSG00000000056.8  73.253615    -0.55834548 0.5440252 -1.0263228
+5     ENSMUSG00000000058.7  13.184263    -0.78255254 1.0691617 -0.7319309
+           pvalue        padj gene_name seqnames
+8350 7.525508e-08 0.001139663    Pcsk1n     chrX
+1    9.183873e-01 0.999995772     Gnai3     chr3
+2    8.795994e-01 0.999995772     Cdc45    chr16
+3    8.185606e-01 0.999995772     Scml2     chrX
+4    3.047395e-01 0.999995772      Narf    chr11
+5    4.642107e-01 0.999995772      Cav2     chr6</code></pre>
+<pre class="r"><code># Get the results for controls (sanity check)
+control_res &lt;- DESeq2::results(dds, c(&quot;Group&quot;, &quot;Male.Control&quot;, &quot;Female.Control&quot;))
+control_res &lt;- na.omit(control_res)
+control_res &lt;- control_res[order(control_res$padj),]
+summary(control_res)</code></pre>
+<pre><code>
+out of 15144 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 0, 0%
+LFC &lt; 0 (down)     : 0, 0%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 2)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<pre class="r"><code>control_res_outs &lt;- rownames_to_column(as.data.frame(control_res), var = &quot;gene_id&quot;)
+control_res_outs &lt;- merge(control_res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+control_res_outs &lt;- control_res_outs[order(control_res_outs$padj), ]
+head(control_res_outs)</code></pre>
+<pre><code>                   gene_id  baseMean log2FoldChange     lfcSE     stat
+4324 ENSMUSG00000026921.21  60.03005       4.618556 1.0316533 4.476849
+4537  ENSMUSG00000027435.9 126.39751       4.416710 1.0373595 4.257647
+4985  ENSMUSG00000028517.9  74.08955       4.144286 0.9948262 4.165839
+65   ENSMUSG00000000530.17  45.58601       4.113436 1.0281035 4.000994
+762  ENSMUSG00000006386.16  18.70097       3.498975 0.9594401 3.646893
+1221 ENSMUSG00000015647.10  38.45961       3.528198 0.9851183 3.581497
+           pvalue      padj gene_name seqnames
+4324 7.575264e-06 0.1147198     Egfl7     chr2
+4537 2.065897e-05 0.1564297      Cd93     chr2
+4985 3.102101e-05 0.1565940     Plpp3     chr4
+65   6.307692e-05 0.2388092    Acvrl1    chr15
+762  2.654307e-04 0.2405078       Tek     chr4
+1221 3.416316e-04 0.2405078     Lama5     chr2</code></pre>
+<pre class="r"><code># write out csvs for further investigation
+write.csv(male_res_outs, file = &quot;output/male_HFHS_vs_Control_DESeq2.csv&quot;)
+write.csv(female_res_outs, file = &quot;output/female_HFHS_vs_Control_DESeq2.csv&quot;)
+write.csv(control_res_outs, file = &quot;output/sanity_check_M.Control_vs_F.Control_DESeq2.csv&quot;)
+
+# look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,3))
+
+hist(male_res$pvalue[male_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Male Res&quot;, xlab=&quot;P-value&quot;)
+hist(female_res$pvalue[female_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Female Res&quot;, xlab=&quot;P-value&quot;)
+hist(control_res$pvalue[control_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Control Res&quot;, xlab=&quot;P-value&quot;)</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/DESeq-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>par(mfrow=c(1,1))</code></pre>
+<ul>
+<li>Noted very few significantly DE genes driving differences between
+both Male and Female HFHS &amp; Control groups, also no significant
+differences for Male.Control vs Female.Control.</li>
+<li>Raw p-value distribution is pretty funky for all except the Control
+Res panel which looks more as we would expect (although the dropoff is
+not as steep as we would see usually).</li>
+<li>This observation corresponds to the PCA plot where data didn’t
+separate well.</li>
+</ul>
+<div id="edger" class="section level2">
+<h2>EdgeR</h2>
+<ul>
+<li>EdgeR also uses a negative binomial distribution to model the count
+data. It also does not assume any differentially expressed genes.</li>
+<li>Similar to limma, it takes an empirical Bayes approach to
+statistical assessment of differential expression.</li>
+<li>All results were sorted by adjusted p-value (“FDR”), however there
+were no significant genes, or variation in FDR adjusted p-value.</li>
+<li>Because of this, results have been sorted by non-adjusted p-value in
+case any interesting genes pop up, despite not having a significant FDR
+adjusted p-value</li>
+</ul>
+<pre class="r"><code># set up EdgeR obect
+y &lt;- DGEList(counts = counts, group = sample_sheet$Group, samples = sample_sheet$LibraryID )
+nrow(y)</code></pre>
+<pre><code>[1] 57126</code></pre>
+<pre class="r"><code># set up the design
+Group &lt;- factor(paste(sample_sheet$Sex, sample_sheet$Treatment, sep = &quot;.&quot;))
+design &lt;- model.matrix(~0+Group)
+colnames(design) &lt;- levels(Group)
+
+# filter out genes using EdgeRs filter by expression method.
+keep &lt;- filterByExpr(y, design)
+table(keep)</code></pre>
+<pre><code>keep
+FALSE  TRUE 
+42923 14203 </code></pre>
+<pre class="r"><code>y &lt;- y[keep, , keep.lib.sizes = FALSE]
+nrow(y) # EdgeR filtering is more stringent than DESeq</code></pre>
+<pre><code>[1] 14203</code></pre>
+<pre class="r"><code># normalize for lib sizes
+y &lt;- normLibSizes(y)
+
+# estimate dispersion
+y &lt;- estimateDisp(y, design = design, robust = TRUE)
+y$common.dispersion</code></pre>
+<pre><code>[1] 0.3692801</code></pre>
+<pre class="r"><code># Test for DE genes - QL methods account for gene-specific variation
+fit &lt;- glmQLFit(y, design = design, robust = TRUE)
+head(fit$coefficients)</code></pre>
+<pre><code>                      Female.Control Female.HFHS Male.Control  Male.HFHS
+ENSMUSG00000051951.6      -11.782246  -12.084611   -12.991184 -12.567257
+ENSMUSG00000102331.2      -13.192691  -12.855313   -12.288501 -12.735129
+ENSMUSG00000033845.14     -10.937502  -11.035717   -10.923538 -11.012402
+ENSMUSG00000025903.15     -10.580002  -10.357290   -10.811947 -10.706273
+ENSMUSG00000033813.16      -9.779922   -9.984207   -10.071174 -10.541457
+ENSMUSG00000033793.13      -9.235888   -9.227411    -9.497008  -9.733718</code></pre>
+<pre class="r"><code># setting up the comparison groups
+# compare Female HFHS to Female control and Male HFHS to Male control
+F.HFHSvsControl &lt;- makeContrasts(Female.HFHS-Female.Control, levels = design)
+M.HFHSvsControl &lt;- makeContrasts(Male.HFHS-Male.Control, levels = design)
+M.ControlvsF.Control &lt;- makeContrasts(Male.Control-Female.Control, levels = design)
+
+F.res &lt;- glmQLFTest(fit, contrast = F.HFHSvsControl)
+edgeR_F.res &lt;- topTags(F.res, n=Inf)
+is.deF &lt;- decideTestsDGE(F.res)
+summary(is.deF)</code></pre>
+<pre><code>       -1*Female.Control 1*Female.HFHS
+Down                                 0
+NotSig                           14203
+Up                                   0</code></pre>
+<pre class="r"><code>M.res &lt;- glmQLFTest(fit, contrast = M.HFHSvsControl)
+edgeR_M.res &lt;- topTags(M.res, n= Inf)
+is.deM &lt;- decideTestsDGE(M.res)
+summary(is.deM)</code></pre>
+<pre><code>       -1*Male.Control 1*Male.HFHS
+Down                             0
+NotSig                       14203
+Up                               0</code></pre>
+<pre class="r"><code>Control.res &lt;- glmQLFTest(fit, contrast = M.ControlvsF.Control)
+edgeR_Control.res &lt;- topTags(Control.res, n = Inf)
+is.deCtrl &lt;- decideTestsDGE(Control.res)
+summary(is.deCtrl)</code></pre>
+<pre><code>       -1*Female.Control 1*Male.Control
+Down                                  0
+NotSig                            14203
+Up                                    0</code></pre>
+<pre class="r"><code>edgeR_f.res_outs &lt;- rownames_to_column(as.data.frame(edgeR_F.res), var = &quot;gene_id&quot;)
+edgeR_f.res_outs &lt;- merge(edgeR_f.res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+edgeR_f.res_outs &lt;- edgeR_f.res_outs[order(edgeR_f.res_outs$PValue), ]
+head(edgeR_f.res_outs)</code></pre>
+<pre><code>                    gene_id     logFC   logCPM         F       PValue       FDR
+8093  ENSMUSG00000039278.11 -5.576804 5.053454 17.540324 0.0004599964 0.9997707
+12590  ENSMUSG00000095098.3 -2.801285 2.749342 11.585175 0.0028420061 0.9997707
+2918   ENSMUSG00000023031.9 -2.069017 1.272690 10.029528 0.0048831941 0.9997707
+12632 ENSMUSG00000096768.10 -5.634671 3.830717  9.562504 0.0057826960 0.9997707
+7199  ENSMUSG00000035890.10 -1.399450 3.779140  9.012422 0.0070868008 0.9997707
+14159  ENSMUSG00000121606.1 -3.168114 4.332001  8.865209 0.0074892253 0.9997707
+      gene_name seqnames
+8093     Pcsk1n     chrX
+12590   Ccdc85b    chr19
+2918      Cela1    chr15
+12632    Erdr1y     chrY
+7199     Rnf126    chr10
+14159   AKAP17A     chrX</code></pre>
+<pre class="r"><code>edgeR_m.res_outs &lt;- rownames_to_column(as.data.frame(edgeR_M.res), var = &quot;gene_id&quot;)
+edgeR_m.res_outs &lt;- merge(edgeR_m.res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+edgeR_m.res_outs &lt;- edgeR_m.res_outs[order(edgeR_m.res_outs$PValue), ]
+head(edgeR_m.res_outs)</code></pre>
+<pre><code>                   gene_id     logFC    logCPM        F       PValue       FDR
+3230 ENSMUSG00000024421.17 -5.571388 0.1365437 17.55785 0.0004577605 0.9998677
+4510 ENSMUSG00000027797.16  2.072677 1.6176213 16.98138 0.0005342094 0.9998677
+62   ENSMUSG00000000530.17 -4.982166 1.8266540 15.56421 0.0008101776 0.9998677
+7652 ENSMUSG00000037754.14 -5.236295 0.2343812 15.02862 0.0009502084 0.9998677
+6120 ENSMUSG00000031879.15 -1.459937 3.5986224 14.07839 0.0012686151 0.9998677
+8319 ENSMUSG00000040170.14  2.527277 2.1369350 13.60281 0.0014726010 0.9998677
+     gene_name seqnames
+3230     Lama3    chr18
+4510     Dclk1     chr3
+62      Acvrl1    chr15
+7652  Ppp1r16b     chr2
+6120    Ciao2b     chr8
+8319      Fmo2     chr1</code></pre>
+<pre class="r"><code>edgeR_Control.res_outs &lt;- rownames_to_column(as.data.frame(edgeR_Control.res), var = &quot;gene_id&quot;)
+edgeR_Control.res_outs &lt;- merge(edgeR_Control.res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+edgeR_Control.res_outs &lt;- edgeR_Control.res_outs[order(edgeR_Control.res_outs$PValue), ]
+head(edgeR_Control.res_outs)</code></pre>
+<pre><code>                    gene_id     logFC     logCPM        F      PValue       FDR
+4173  ENSMUSG00000026921.21  4.353317  2.3288721 13.65146 0.001450250 0.6825522
+4811   ENSMUSG00000028517.9  3.880155  2.7100152 12.03889 0.002441277 0.6825522
+5949  ENSMUSG00000031502.12  2.628102  6.1627073 11.84629 0.002603176 0.6825522
+4382   ENSMUSG00000027435.9  4.102282  3.5413057 11.82698 0.002620056 0.6825522
+12432  ENSMUSG00000090175.2 -5.757601 -0.3544042 12.43222 0.002843214 0.6825522
+62    ENSMUSG00000000530.17  3.823289  1.8266540 11.49062 0.002934409 0.6825522
+      gene_name seqnames
+4173      Egfl7     chr2
+4811      Plpp3     chr4
+5949     Col4a1     chr8
+4382       Cd93     chr2
+12432    Ugt1a9     chr1
+62       Acvrl1    chr15</code></pre>
+<pre class="r"><code>write.csv(edgeR_m.res_outs, file = &quot;output/male_HFHS_vs_Control_EdgeR.csv&quot;)
+write.csv(edgeR_f.res_outs, file = &quot;output/female_HFHS_vs_Control_EdgeR.csv&quot;)
+write.csv(edgeR_Control.res_outs, file = &quot;output/sanity_check_M.Control_vs_F.Control_EdgeR.csv&quot;)
+
+# look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,3))
+
+hist(edgeR_M.res$table$PValue[edgeR_M.res$table$logCPM &gt; 1], breaks = 0:20/20, main=&quot;Male Res&quot;, xlab=&quot;P-value&quot;)
+hist(edgeR_F.res$table$PValue[edgeR_F.res$table$logCPM &gt; 1], breaks = 0:20/20, main=&quot;Female Res&quot;, xlab=&quot;P-value&quot;)
+hist(edgeR_Control.res$table$PValue[edgeR_Control.res$table$logCPM &gt; 1], breaks = 0:20/20, main=&quot;Control Res&quot;, xlab=&quot;P-value&quot;)</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/edgeR-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>par(mfrow=c(1,1))</code></pre>
+<ul>
+<li>Using EdgeR had very similar results to DEseq2, but found no
+significantly DE genes.</li>
+<li>P-value distribution follows a similar concerning trend for the HFHS
+vs Control comparison for both males and females, but looks more as we
+would expect for Male.Control vs Female.Control (although the dropoff is
+not as steep as it would be usually).</li>
+</ul>
+</div>
+<div id="limma" class="section level2">
+<h2>Limma</h2>
+<ul>
+<li>Limma voom estimates the relationship between mean and variance in
+logCPM data, normalises it and then creates “precision weights” for each
+gene.</li>
+<li>It then takes an empirical Bayes approach to assessing
+differentially expressed genes (similar to EdgeR).</li>
+<li>All results were sorted by adjusted p-value (“FDR”), however there
+were no significant genes, or variation in FDR adjusted p-value.</li>
+<li>Because of this, results have been sorted by non-adjusted p-value in
+case any interesting genes pop up, despite not having a significant FDR
+adjusted p-value</li>
+</ul>
+<pre class="r"><code># use same objects created with edgeR
+dge &lt;- DGEList(counts = counts, group = sample_sheet$Group, samples = sample_sheet$LibraryID )
+
+# set up the design
+Group &lt;- factor(paste(sample_sheet$Sex, sample_sheet$Treatment, sep = &quot;.&quot;))
+design &lt;- model.matrix(~0+Group)
+colnames(design) &lt;- levels(Group)
+
+# filter out genes that have less than 10 counts in 5 or more groups
+keep &lt;- filterByExpr(dge, design)
+dge &lt;- dge[keep, , keep.lib.sizes = FALSE]
+
+
+# use voom to determine differential expression
+v &lt;- voom(dge, design, plot = F)
+fit.limma &lt;- lmFit(v, design)
+fit.limma &lt;- eBayes(fit.limma)
+
+# contrasts (exactly the same as for edgeR)
+F.HFHSvsControl &lt;- makeContrasts(Female.HFHS-Female.Control, levels = design)
+M.HFHSvsControl &lt;- makeContrasts(Male.HFHS-Male.Control, levels = design)
+M.ControlvsF.Control &lt;- makeContrasts(Male.Control-Female.Control, levels = design)
+
+f.fit &lt;- contrasts.fit(fit.limma, contrasts = F.HFHSvsControl)
+f.fit &lt;- eBayes(f.fit, trend = TRUE)
+summary(decideTests(f.fit, method=&quot;global&quot;, lfc = 2, p.value = 0.05, adjust.method = &quot;fdr&quot;))</code></pre>
+<pre><code>       Female.HFHS - Female.Control
+Down                              0
+NotSig                        14203
+Up                                0</code></pre>
+<pre class="r"><code>m.fit &lt;- contrasts.fit(fit.limma, contrasts = M.HFHSvsControl)
+m.fit &lt;- eBayes(m.fit, trend = TRUE)
+summary(decideTests(m.fit, method=&quot;global&quot;, lfc = 2, p.value = 0.05, adjust.method = &quot;fdr&quot;))</code></pre>
+<pre><code>       Male.HFHS - Male.Control
+Down                          0
+NotSig                    14203
+Up                            0</code></pre>
+<pre class="r"><code>ctrl.fit &lt;- contrasts.fit(fit.limma, contrasts = M.ControlvsF.Control)
+ctrl.fit &lt;- eBayes(ctrl.fit, trend = TRUE)
+summary(decideTests(ctrl.fit, method = &quot;global&quot;, lfc = 2, p.value = 0.05, adjust.method = &quot;fdr&quot;))</code></pre>
+<pre><code>       Male.Control - Female.Control
+Down                               0
+NotSig                         14203
+Up                                 0</code></pre>
+<pre class="r"><code>topGenes_female_limma &lt;- topTable(f.fit, number = Inf, sort.by = &quot;P&quot;)
+topGenes_male_limma &lt;- topTable(m.fit, number = Inf, sort.by = &quot;P&quot;)
+topGenes_control_limma &lt;- topTable(ctrl.fit, number = Inf, sort.by = &quot;P&quot;)
+
+limma_f.res_outs &lt;- rownames_to_column(as.data.frame(topGenes_female_limma), var = &quot;gene_id&quot;)
+limma_f.res_outs &lt;- merge(limma_f.res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+limma_f.res_outs &lt;- limma_f.res_outs[order(limma_f.res_outs$P.Value), ]
+
+limma_m.res_outs &lt;- rownames_to_column(as.data.frame(topGenes_male_limma), var = &quot;gene_id&quot;)
+limma_m.res_outs &lt;- merge(limma_m.res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+limma_m.res_outs &lt;- limma_m.res_outs[order(limma_m.res_outs$P.Value), ]
+
+limma_ctrl.res_outs &lt;- rownames_to_column(as.data.frame(topGenes_control_limma), var = &quot;gene_id&quot;)
+limma_ctrl.res_outs &lt;- merge(limma_ctrl.res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+limma_ctrl.res_outs &lt;- limma_ctrl.res_outs[order(limma_ctrl.res_outs$P.Value), ]
+
+write.csv(limma_f.res_outs, file = &quot;output/female_genes_limma.csv&quot;)
+write.csv(limma_m.res_outs, file = &quot;output/male_genes_limma.csv&quot;)
+write.csv(limma_ctrl.res_outs, file = &quot;output/control_genes_limma.csv&quot;)
+
+# look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,3))
+
+hist(topGenes_male_limma$P.Value[topGenes_male_limma$AveExpr &gt; 1], breaks = 0:20/20, main=&quot;Male Res&quot;, xlab=&quot;P-value&quot;)
+hist(topGenes_female_limma$P.Value[topGenes_female_limma$AveExpr &gt; 1], breaks = 0:20/20, main=&quot;Female Res&quot;, xlab=&quot;P-value&quot;)
+hist(topGenes_control_limma$P.Value[topGenes_control_limma$AveExpr &gt; 1], breaks = 0:20/20, main=&quot;Control Res&quot;, xlab=&quot;P-value&quot;)</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/limma-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>par(mfrow=c(1,1))</code></pre>
+<ul>
+<li>Using limma, the control p-value distribution looks almost exactly
+as we would expect.</li>
+<li>However, there are still no differentially expressed genes
+identified.</li>
+</ul>
+</div>
+</div>
+<div id="find-the-overlap-between-deseq2-edger-and-limma"
+class="section level1">
+<h1>Find the overlap between DESeq2, EdgeR and limma</h1>
+<p>This is not the overlap between differentially expressed genes,
+because there were none. It is the overlap between the top 1000 genes
+identified as variable. Unsurprisingly, DESeq2, which is less stringent,
+identified a bunch of genes not found by edgeR and limma, and limma and
+edgeR, which share similar methodology, found many genes in common.</p>
+<pre class="r"><code>setlist &lt;- list(edgeR=edgeR_f.res_outs$gene_id[1:1000], DESeq2=female_res_outs$gene_id[1:1000], Limma=limma_f.res_outs$gene_id[1:1000])
+vennset &lt;- overLapper(setlist=setlist[1:3], type = &quot;vennsets&quot;)
+vennPlot(vennset, mymain = &quot;overlap of top 100 identified genes&quot;)</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/overlap-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="retest-with-outliers-removed" class="section level1">
+<h1>Retest with outliers removed</h1>
+<p>Based on PCA, remove sample 3 from analysis and re-assess using
+DESeq2 (as it was the only method which was able to identify any DE
+genes)</p>
+<pre class="r"><code># Filter out sample 3
+outlier_sample &lt;- which(colData(dds)$LibraryID==&quot;3&quot;)
+dds_filt &lt;- dds[,-outlier_sample]
+
+# normalise and view the PCA with it now removed
+vst_filt &lt;- vst(dds_filt, blind = F)
+pcaFilt &lt;- plotPCA(vst_filt, intgroup = c(&quot;Treatment&quot;, &quot;Sex&quot;), returnData = TRUE)</code></pre>
+<pre><code>using ntop=500 top features by variance</code></pre>
+<pre class="r"><code>#sort out the labels - use RegEx to extract the digits that are after the final underscore
+pcaFilt &lt;- pcaFilt %&gt;%
+  mutate(LibID = str_extract(name, &quot;(?&lt;=_)(\\d+)$&quot; ))
+pcaFilt$LibID &lt;- ifelse(is.na(pcaFilt$LibID), &quot;femextra&quot;, pcaFilt$LibID)
+
+percentVarFilt &lt;- round(100 * attr(pcaFilt, &quot;percentVar&quot;))
+
+ggplot(pcaFilt, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0(&quot;PC1: &quot;, percentVarFilt[1], &quot;% variance&quot;)) +
+    ylab(paste0(&quot;PC2: &quot;, percentVarFilt[2], &quot;% variance&quot;)) +
+    coord_fixed() +
+    ggtitle(&quot;PCA plot&quot;) </code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/retest-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Run Deseq on the filtered object
+dds_filt &lt;- DESeq(dds_filt)</code></pre>
+<pre><code>using pre-existing size factors</code></pre>
+<pre><code>estimating dispersions</code></pre>
+<pre><code>found already estimated dispersions, replacing these</code></pre>
+<pre><code>gene-wise dispersion estimates</code></pre>
+<pre><code>mean-dispersion relationship</code></pre>
+<pre><code>final dispersion estimates</code></pre>
+<pre><code>fitting model and testing</code></pre>
+<pre class="r"><code>resultsNames(dds_filt)</code></pre>
+<pre><code>[1] &quot;GroupFemale.Control&quot; &quot;GroupFemale.HFHS&quot;    &quot;GroupMale.Control&quot;  
+[4] &quot;GroupMale.HFHS&quot;     </code></pre>
+<pre class="r"><code># Get the results for males
+male_res_filt &lt;- DESeq2::results(dds_filt, contrast=c(&quot;Group&quot;, &quot;Male.HFHS&quot;, &quot;Male.Control&quot;))
+male_res_filt &lt;- na.omit(male_res_filt)
+male_res_filt &lt;- male_res_filt[order(male_res_filt$padj),]
+summary(male_res_filt)</code></pre>
+<pre><code>
+out of 15169 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 0, 0%
+LFC &lt; 0 (down)     : 0, 0%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 2)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<pre class="r"><code>male_res_filt_outs &lt;- rownames_to_column(as.data.frame(male_res_filt), var = &quot;gene_id&quot;)
+male_res_filt_outs &lt;- merge(male_res_filt_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+male_res_filt_outs &lt;- male_res_filt_outs[order(male_res_filt_outs$padj), ] # while there aren&#39;t significant genes, there is variation in padj.
+head(male_res_filt_outs)</code></pre>
+<pre><code>                   gene_id   baseMean log2FoldChange     lfcSE     stat
+4680 ENSMUSG00000027797.16  26.656426      1.9896406 0.4577563 4.346506
+4297 ENSMUSG00000026832.13   6.023036      2.9558384 0.7942363 3.721611
+6543 ENSMUSG00000032332.18  26.251035      5.2651668 1.3908104 3.785683
+8601 ENSMUSG00000040170.14  37.796326      2.3717810 0.6374308 3.720844
+9460  ENSMUSG00000044674.7  14.120428      2.1739925 0.5556493 3.912526
+129  ENSMUSG00000001089.15 233.046087      0.6292129 0.1893584 3.322868
+           pvalue      padj gene_name seqnames
+4680 1.383230e-05 0.2098221     Dclk1     chr3
+4297 1.979559e-04 0.6023844     Cytip     chr2
+6543 1.532872e-04 0.6023844   Col12a1     chr9
+8601 1.985577e-04 0.6023844      Fmo2     chr1
+9460 9.133562e-05 0.6023844      Fzd1     chr5
+129  8.909713e-04 0.9899436     Luzp1     chr4</code></pre>
+<pre class="r"><code>#Get the results for females
+female_res_filt &lt;- DESeq2::results(dds_filt, contrast=c(&quot;Group&quot;, &quot;Female.HFHS&quot;, &quot;Female.Control&quot;))
+female_res_filt &lt;- na.omit(female_res_filt)
+female_res_filt &lt;- female_res_filt[order(female_res_filt$padj),]
+summary(female_res_filt)</code></pre>
+<pre><code>
+out of 15169 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 0, 0%
+LFC &lt; 0 (down)     : 1, 0.0066%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 2)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<pre class="r"><code>female_res_filt_outs &lt;- rownames_to_column(as.data.frame(female_res_filt), var = &quot;gene_id&quot;)
+female_res_filt_outs &lt;- merge(female_res_filt_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+female_res_filt_outs &lt;- female_res_filt_outs[order(female_res_filt_outs$padj), ] # while there aren&#39;t significant genes, there is variation in padj.
+head(female_res_filt_outs)</code></pre>
+<pre><code>                   gene_id   baseMean log2FoldChange     lfcSE       stat
+8369 ENSMUSG00000039278.11 292.223065    -5.52150146 1.0424015 -5.2969048
+1     ENSMUSG00000000001.5 865.686235     0.06304485 0.6267924  0.1005833
+2    ENSMUSG00000000028.16  18.968029    -0.06677648 0.4384538 -0.1522999
+3    ENSMUSG00000000037.18   4.478554    -0.16345725 0.7400762 -0.2208654
+4     ENSMUSG00000000056.8  68.220072    -0.55840204 0.5325284 -1.0485863
+5     ENSMUSG00000000058.7   9.172232    -0.78277846 1.0575177 -0.7402037
+           pvalue        padj gene_name seqnames
+8369 1.177821e-07 0.001786636    Pcsk1n     chrX
+1    9.198813e-01 0.999930222     Gnai3     chr3
+2    8.789504e-01 0.999930222     Cdc45    chr16
+3    8.251972e-01 0.999930222     Scml2     chrX
+4    2.943685e-01 0.999930222      Narf    chr11
+5    4.591764e-01 0.999930222      Cav2     chr6</code></pre>
+<pre class="r"><code># write out csvs
+write.csv(male_res_filt_outs, file = &quot;output/male_filt_genes_HFHS_vs_Control_DESeq.csv&quot;)
+write.csv(female_res_filt_outs, file = &quot;output/female_filt_genes_HFHS_vs_Control_DESeq.csv&quot;)</code></pre>
+<ul>
+<li>This produced very similar results to the first analysis.</li>
+</ul>
+</div>
+<div id="what-is-driving-the-pca-groups-identified"
+class="section level1">
+<h1>What is driving the PCA groups identified?</h1>
+<p>First, determine the degree of variation between the samples by
+calculating poisson distances, then calculate differentially expressed
+genes between groups.</p>
+<div id="poisson-distances" class="section level2">
+<h2>Poisson distances</h2>
+<p>Using raw counts to calculate poisson distances, but filtered for low
+expression.</p>
+<pre class="r"><code># further check variability in the samples based on poisson distance
+
+poisd &lt;- PoissonDistance(t(counts(dds_filt)))
+samplePoisDistMatrix &lt;- as.matrix( poisd$dd )
+#colnames(samplePoisDistMatrix) &lt;- NULL
+colors &lt;- colorRampPalette( rev(brewer.pal(9, &quot;Blues&quot;)) )(255)
+
+pheatmap(samplePoisDistMatrix,
+         clustering_distance_rows = poisd$dd, 
+         clustering_distance_cols = poisd$dd, 
+         col = colors,main = &quot;Poisson distances&quot;,
+         labels_row = sample_sheet$Group,
+        labels_col = sample_sheet$LibraryID)</code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/furtherChecks-1.png" width="672" style="display: block; margin: auto;" /></p>
+<ul>
+<li>This essentially shows what we saw on the PCA but a little bit more
+fine grained. Based on poisson distances between samples (library ID on
+x axis, sample group on y axis), there are two clear groups.</li>
+<li>When we group the data by whether it is in the first cluster at the
+top left or second cluster at the bottom right, we can view it on the
+PCA:</li>
+</ul>
+<pre class="r"><code>#plot PCA based on poisson group
+sample_sheet$Poisson.Group &lt;- factor(sample_sheet$Poisson.Group)
+pcaFilt.poisson &lt;- plotPCA(vst_filt, intgroup = c(&quot;Sex&quot;, &quot;Treatment&quot;, &quot;Poisson.Group&quot;), returnData = TRUE)</code></pre>
+<pre><code>using ntop=500 top features by variance</code></pre>
+<pre class="r"><code>#sort out the labels - use RegEx to extract the digits that are after the final underscore
+pcaFilt.poisson &lt;- pcaFilt.poisson %&gt;%
+  mutate(LibID = str_extract(name, &quot;(?&lt;=_)(\\d+)$&quot; ))
+pcaFilt.poisson$LibID &lt;- ifelse(is.na(pcaFilt$LibID), &quot;femextra&quot;, pcaFilt$LibID)
+
+percentVarFilt.poisson &lt;- round(100 * attr(pcaFilt.poisson, &quot;percentVar&quot;))
+poisson_pca_cols &lt;- colorRampPalette( rev(brewer.pal(9, &quot;Blues&quot;)) )(3)
+
+ggplot(pcaFilt.poisson, aes(x = PC1, y = PC2, shape = Sex, color = Poisson.Group)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    scale_color_manual(values = poisson_pca_cols)+
+    xlab(paste0(&quot;PC1: &quot;, percentVarFilt[1], &quot;% variance&quot;)) +
+    ylab(paste0(&quot;PC2: &quot;, percentVarFilt[2], &quot;% variance&quot;)) +
+    coord_fixed() +
+    ggtitle(&quot;PCA plot&quot;) </code></pre>
+<p><img src="figure/RNAseq_analysis.Rmd/PoissonPCA-1.png" width="672" style="display: block; margin: auto;" /></p>
+<ul>
+<li>The poisson groups don’t match perfectly to the PCA plot, but
+they’re pretty close.</li>
+<li>To figure out what is driving these differences we can test for DE
+genes and look at associated go terms</li>
+<li>Will use EdgeR to do this because it has an easy inbuilt tool
+(<code>goana</code>) for this purpose.</li>
+</ul>
+</div>
+<div id="run-edger-on-identified-poisson-groups" class="section level2">
+<h2>Run EdgeR on identified poisson groups</h2>
+<pre class="r"><code># set up edgeR object
+y &lt;- DGEList(counts = counts, group = sample_sheet$Poisson.Group, samples = sample_sheet$LibID )
+
+# filter out low counts as before
+keep &lt;- filterByExpr(y)
+y &lt;- y[keep, , keep.lib.sizes = FALSE]
+
+#filter out sample 3
+outlier_sample &lt;- which(rownames(y$samples)==&quot;03_trimmed_S250076152_L01_3&quot;)
+y_filt &lt;- y[,-outlier_sample]
+
+# normalize for lib sizes
+y_filt &lt;- normLibSizes(y_filt)
+
+# estimate dispersion
+y_filt &lt;- estimateDisp(y_filt, robust = TRUE)</code></pre>
+<pre><code>Using classic mode.</code></pre>
+<pre class="r"><code># Test for DE genes - QL methods account for gene-specific variation
+fit &lt;- glmQLFit(y_filt, robust = TRUE)
+res &lt;- glmQLFTest(fit)
+is.de &lt;- decideTestsDGE(res)
+summary(is.de)</code></pre>
+<pre><code>       y$samples$groupGroup 2
+Down                     3817
+NotSig                   4995
+Up                       4101</code></pre>
+<pre class="r"><code># EdgeR results outs
+res_outs &lt;- rownames_to_column(as.data.frame(res), var = &quot;gene_id&quot;)
+res_outs &lt;- merge(res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+res_outs &lt;- res_outs[order(res_outs$PValue), ]
+head(res_outs)</code></pre>
+<pre><code>                   gene_id     logFC   logCPM        F       PValue gene_name
+7572  ENSMUSG00000038555.8 -1.826912 4.055629 73.01267 2.409784e-08     Reep2
+289   ENSMUSG00000002379.8 -2.820498 5.279392 65.36687 6.022028e-08   Ndufa11
+5089 ENSMUSG00000029551.14 -2.296329 2.371724 65.28161 6.086625e-08     Psmg3
+4824 ENSMUSG00000028952.13 -2.013984 4.064273 65.18352 6.161881e-08    Zbtb48
+2539 ENSMUSG00000022386.13 -2.208531 4.602698 60.08086 1.191719e-07      Trmu
+1486 ENSMUSG00000019737.15 -2.070686 6.277480 59.83240 1.231927e-07     Syne4
+     seqnames
+7572    chr18
+289     chr17
+5089     chr5
+4824     chr4
+2539    chr15
+1486     chr7</code></pre>
+<pre class="r"><code>write.csv(res_outs, file = &quot;output/Poisson_groups_DEGenes_EdgeR.csv&quot;)
+
+# What differences are we actually testing? Look at go terms
+entrez &lt;- as.character(res_outs$gene_id)
+go_results &lt;- goana(entrez, species=&quot;Mm&quot;)
+topGO(go_results, p.value = 0.05)</code></pre>
+<pre><code>[1] Term Ont  N    DE   P.DE
+&lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<ul>
+<li>No statistically significant GO terms associated with DE genes
+between the two groups.</li>
+<li>Very likely testing noise</li>
+</ul>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.3.3 (2024-02-29)
+Platform: aarch64-apple-darwin20 (64-bit)
+Running under: macOS Sonoma 14.4.1
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Australia/Adelaide
+tzcode source: internal
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+ [1] RColorBrewer_1.1-3          pheatmap_1.0.12            
+ [3] PoiClaClu_1.0.2.1           ggrepel_0.9.5              
+ [5] rtracklayer_1.62.0          gplots_3.1.3.1             
+ [7] lubridate_1.9.3             forcats_1.0.0              
+ [9] stringr_1.5.1               dplyr_1.1.4                
+[11] purrr_1.0.2                 readr_2.1.5                
+[13] tidyr_1.3.1                 tibble_3.2.1               
+[15] tidyverse_2.0.0             factoextra_1.0.7           
+[17] ggplot2_3.5.1               systemPipeR_2.8.0          
+[19] ShortRead_1.60.0            GenomicAlignments_1.38.2   
+[21] BiocParallel_1.36.0         Rsamtools_2.18.0           
+[23] Biostrings_2.70.3           XVector_0.42.0             
+[25] edgeR_4.0.16                limma_3.58.1               
+[27] DESeq2_1.42.1               SummarizedExperiment_1.32.0
+[29] Biobase_2.62.0              MatrixGenerics_1.14.0      
+[31] matrixStats_1.3.0           GenomicRanges_1.54.1       
+[33] GenomeInfoDb_1.38.8         IRanges_2.36.0             
+[35] S4Vectors_0.40.2            BiocGenerics_0.48.1        
+[37] workflowr_1.7.1            
+
+loaded via a namespace (and not attached):
+ [1] rstudioapi_0.16.0       jsonlite_1.8.8          magrittr_2.0.3         
+ [4] farver_2.1.1            rmarkdown_2.26          fs_1.6.4               
+ [7] BiocIO_1.12.0           zlibbioc_1.48.2         vctrs_0.6.5            
+[10] memoise_2.0.1           RCurl_1.98-1.14         htmltools_0.5.8.1      
+[13] S4Arrays_1.2.1          SparseArray_1.2.4       sass_0.4.9             
+[16] KernSmooth_2.23-22      bslib_0.7.0             htmlwidgets_1.6.4      
+[19] cachem_1.0.8            whisker_0.4.1           lifecycle_1.0.4        
+[22] pkgconfig_2.0.3         Matrix_1.6-5            R6_2.5.1               
+[25] fastmap_1.1.1           GenomeInfoDbData_1.2.11 digest_0.6.35          
+[28] colorspace_2.1-0        AnnotationDbi_1.64.1    ps_1.7.6               
+[31] rprojroot_2.0.4         RSQLite_2.3.6           hwriter_1.3.2.1        
+[34] labeling_0.4.3          org.Mm.eg.db_3.18.0     fansi_1.0.6            
+[37] timechange_0.3.0        httr_1.4.7              abind_1.4-5            
+[40] compiler_4.3.3          bit64_4.0.5             withr_3.0.0            
+[43] DBI_1.2.2               highr_0.10              DelayedArray_0.28.0    
+[46] rjson_0.2.21            gtools_3.9.5            caTools_1.18.2         
+[49] tools_4.3.3             httpuv_1.6.15           glue_1.7.0             
+[52] restfulr_0.0.15         callr_3.7.6             promises_1.3.0         
+[55] grid_4.3.3              getPass_0.2-4           generics_0.1.3         
+[58] gtable_0.3.5            tzdb_0.4.0              hms_1.1.3              
+[61] utf8_1.2.4              pillar_1.9.0            later_1.3.2            
+[64] splines_4.3.3           lattice_0.22-6          bit_4.0.5              
+[67] deldir_2.0-4            tidyselect_1.2.1        GO.db_3.18.0           
+[70] locfit_1.5-9.9          knitr_1.45              git2r_0.33.0           
+[73] xfun_0.43               statmod_1.5.0           stringi_1.8.3          
+[76] yaml_2.3.8              evaluate_0.23           codetools_0.2-20       
+[79] interp_1.1-6            cli_3.6.2               munsell_0.5.1          
+[82] processx_3.8.4          jquerylib_0.1.4         Rcpp_1.0.12            
+[85] png_0.1-8               XML_3.99-0.16.1         parallel_4.3.3         
+[88] blob_1.2.4              latticeExtra_0.6-30     jpeg_0.1-10            
+[91] bitops_1.0-7            scales_1.3.0            crayon_1.5.2           
+[94] rlang_1.1.3             KEGGREST_1.42.0        </code></pre>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
