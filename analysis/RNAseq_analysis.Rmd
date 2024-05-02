@@ -495,7 +495,6 @@ pheatmap(samplePoisDistMatrix,
          labels_row = sample_sheet$Group,
         labels_col = sample_sheet$LibraryID)
     
-
 ```
 
 * This essentially shows what we saw on the PCA but a little bit more fine grained. Based on poisson distances between samples (library ID on x axis, sample group on y axis), there are two clear groups. 
@@ -564,6 +563,9 @@ write.csv(res_outs, file = "output/Poisson_groups_DEGenes_EdgeR.csv")
 entrez <- as.character(res_outs$gene_id)
 go_results <- goana(entrez, species="Mm")
 topGO(go_results, p.value = 0.05)
+
+# Not significant go terms:
+topGO(go_results)
 ```
 
 * No statistically significant GO terms associated with DE genes between the two groups. 
