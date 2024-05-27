@@ -13,7 +13,7 @@
 
 <title>Home</title>
 
-<script src="site_libs/header-attrs-2.26/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.27/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -312,7 +312,7 @@ class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2024-05-02
+<strong>Last updated:</strong> 2024-05-27
 </p>
 <p>
 <strong>Checks:</strong> <span
@@ -359,15 +359,15 @@ results.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree55e479f86eff653e15106d59d36c48a8974ab1ebtargetblank55e479fa">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtreec3a712b1bc08975087f839afc2069af1edecbb4btargetblankc3a712ba">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/55e479f86eff653e15106d59d36c48a8974ab1eb" target="_blank">55e479f</a>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/c3a712b1bc08975087f839afc2069af1edecbb4b" target="_blank">c3a712b</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree55e479f86eff653e15106d59d36c48a8974ab1ebtargetblank55e479fa"
+id="strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtreec3a712b1bc08975087f839afc2069af1edecbb4btargetblankc3a712ba"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -377,7 +377,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/55e479f86eff653e15106d59d36c48a8974ab1eb" target="_blank">55e479f</a>.
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/c3a712b1bc08975087f839afc2069af1edecbb4b" target="_blank">c3a712b</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -400,46 +400,77 @@ Untracked files:
     Untracked:  code/STAR.sh
     Untracked:  code/cutadapt.sh
     Untracked:  code/fastqc.sh
+    Untracked:  code/job_picard.sh
+    Untracked:  code/mappingStats.sh
+    Untracked:  code/picard_markDups.sh
+    Untracked:  data/01_trimmed_S250076152_L01_1_Dedup.out.bam
     Untracked:  data/01_trimmed_S250076152_L01_1_ReadsPerGene.out.tab
+    Untracked:  data/02_trimmed_S250076152_L01_2_Dedup.out.bam
     Untracked:  data/02_trimmed_S250076152_L01_2_ReadsPerGene.out.tab
+    Untracked:  data/03_rimmed_S250076152_L01_3_Dedup.out.bam
     Untracked:  data/03_trimmed_S250076152_L01_3_ReadsPerGene.out.tab
     Untracked:  data/04_trimmed_S250076152_L01_4_ReadsPerGene.out.tab
+    Untracked:  data/05_trimmed_S250076152_L01_4_Dedup.out.bam
+    Untracked:  data/05_trimmed_S250076152_L01_6_Dedup.out.bam
     Untracked:  data/05_trimmed_S250076152_L01_6_ReadsPerGene.out.tab
+    Untracked:  data/06_trimmed_S250076152_L01_7_Dedup.out.bam
     Untracked:  data/06_trimmed_S250076152_L01_7_ReadsPerGene.out.tab
+    Untracked:  data/07_trimmed_S250076152_L01_8_Dedup.out.bam
     Untracked:  data/07_trimmed_S250076152_L01_8_ReadsPerGene.out.tab
+    Untracked:  data/08_trimmed_S250076152_L01_9_Dedup.out.bam
     Untracked:  data/08_trimmed_S250076152_L01_9_ReadsPerGene.out.tab
+    Untracked:  data/09_trimmed_S250076152_L01_10_Dedup.out.bam
     Untracked:  data/09_trimmed_S250076152_L01_10_ReadsPerGene.out.tab
+    Untracked:  data/10_trimmed_S250076152_L01_12_Dedup.out.bam
     Untracked:  data/10_trimmed_S250076152_L01_12_ReadsPerGene.out.tab
+    Untracked:  data/11_trimmed_S250076152_L01_13_Dedup.out.bam
     Untracked:  data/11_trimmed_S250076152_L01_13_ReadsPerGene.out.tab
+    Untracked:  data/12_trimmed_S250076152_L01_15_Dedup.out.bam
     Untracked:  data/12_trimmed_S250076152_L01_15_ReadsPerGene.out.tab
+    Untracked:  data/13_trimmed_S250076152_L01_17_Dedup.out.bam
     Untracked:  data/13_trimmed_S250076152_L01_17_ReadsPerGene.out.tab
+    Untracked:  data/14_trimmed_S250076152_L01_18_Dedup.out.bam
     Untracked:  data/14_trimmed_S250076152_L01_18_ReadsPerGene.out.tab
+    Untracked:  data/15_trimmed_S250076152_L01_19_Dedup.out.bam
     Untracked:  data/15_trimmed_S250076152_L01_19_ReadsPerGene.out.tab
+    Untracked:  data/16_trimmed_S250076152_L01_20_Dedup.out.bam
     Untracked:  data/16_trimmed_S250076152_L01_20_ReadsPerGene.out.tab
+    Untracked:  data/17_trimmed_S250076152_L01_21_Dedup.out.bam
     Untracked:  data/17_trimmed_S250076152_L01_21_ReadsPerGene.out.tab
+    Untracked:  data/18_trimmed_S250076152_L01_23_Dedup.out.bam
     Untracked:  data/18_trimmed_S250076152_L01_23_ReadsPerGene.out.tab
+    Untracked:  data/19_trimmed_S250076152_L01_24_Dedup.out.bam
     Untracked:  data/19_trimmed_S250076152_L01_24_ReadsPerGene.out.tab
+    Untracked:  data/20_trimmed_S250076152_L01_Femextra_Dedup.out.bam
     Untracked:  data/20_trimmed_S250076152_L01_Femextra_ReadsPerGene.out.tab
+    Untracked:  data/LMN_sequencing_summary_HP.xlsx
     Untracked:  data/Sample ID_8 week offspring beta-cells_mRNA-seq.xlsx
     Untracked:  data/gencode.vM34.annotation.gtf
+    Untracked:  data/mappingStats.csv
     Untracked:  data/sample_sheet.csv
     Untracked:  output/Poisson_groups_DEGenes_EdgeR.csv
+    Untracked:  output/QCfilt_ALL.HFHS_vs_ALL.Control_KEGGPathways.csv
+    Untracked:  output/QCfilt_F.HFHS_vs_F.Control_DESeq2.csv
+    Untracked:  output/QCfilt_F.HFHS_vs_F.Control_KEGGPathways.csv
+    Untracked:  output/QCfilt_M.Control_vs_F.Control_DESeq2.csv
+    Untracked:  output/QCfilt_M.HFHS_vs_M.Control_DESeq2.csv
+    Untracked:  output/QCfilt_M.HFHS_vs_M.Control_KEGGPathways.csv
+    Untracked:  output/QCfilt_all.HFHS_vs_all.Control.csv
     Untracked:  output/control_genes_limma.csv
     Untracked:  output/female_HFHS_vs_Control_DESeq2.csv
     Untracked:  output/female_HFHS_vs_Control_EdgeR.csv
     Untracked:  output/female_filt_genes_HFHS_vs_Control_DESeq.csv
-    Untracked:  output/female_genes_HFHS_vs_Control.csv
     Untracked:  output/female_genes_limma.csv
     Untracked:  output/male_HFHS_vs_Control_DESeq2.csv
     Untracked:  output/male_HFHS_vs_Control_EdgeR.csv
     Untracked:  output/male_filt_genes_HFHS_vs_Control_DESeq.csv
-    Untracked:  output/male_genes_HFHS_vs_Control.csv
     Untracked:  output/male_genes_limma.csv
     Untracked:  output/sanity_check_M.Control_vs_F.Control_DESeq2.csv
     Untracked:  output/sanity_check_M.Control_vs_F.Control_EdgeR.csv
 
 Unstaged changes:
     Modified:   analysis/_site.yml
+    Deleted:    output/README.md
 
 </code></pre>
 <p>
@@ -484,6 +515,41 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/c3a712b1bc08975087f839afc2069af1edecbb4b/analysis/index.Rmd" target="_blank">c3a712b</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-27
+</td>
+<td>
+wflow_publish(files = c("analysis/RNAseq_analysis.Rmd",
+"analysis/RNAseq_analysis_QUALITY_FILT.Rmd",
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/hollypinkney/240501_LMN_RNAseq/9598e8c51bb012c99e7c32cb3f3f300ca044a0db/docs/index.html" target="_blank">9598e8c</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-05-02
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 html
@@ -548,13 +614,13 @@ class="section level1">
 <ul>
 <li>Bioinformatician: Holly Pinkney</li>
 <li>For: Lisa Nicholas</li>
-<li>Date: 30th April 2024</li>
+<li>Date: 27 May 2024</li>
 </ul>
 </div>
 <div id="results" class="section level1">
 <h1>Results</h1>
 <ul>
-<li>Results for all analysis can be found <a
+<li>Results for the initial analysis (April 2024) can be found <a
 href="RNAseq_analysis.html">here</a>.
 <ul>
 <li>Ran DESeq2, EdgeR and Limma. This compares male offspring from HFHS
@@ -570,6 +636,18 @@ calculating poisson distances and identifying differentially expressed
 genes.</li>
 <li>Go terms for these differences were investigated but none were
 statistically significant.</li>
+</ul></li>
+<li>Results for updated analysis (May 2024) can be found <a
+href="RNAseq_analysis_QUALITY_FILT.html">here</a>
+<ul>
+<li>Investigated a variety of metrics to ascertain what is causing the
+separation on the PCA</li>
+<li>Identified sample quality as the likely cause.</li>
+<li>Filtered out the poor quality samples (stringently this time).
+Samples now separate by treatment group.</li>
+<li>Ran differential expression analysis dependent and independent of
+sex.</li>
+<li>Performed pathway analysis on DE genes between groups.</li>
 </ul></li>
 </ul>
 </div>
