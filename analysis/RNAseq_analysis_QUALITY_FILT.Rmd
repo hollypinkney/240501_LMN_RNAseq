@@ -1,0 +1,495 @@
+---
+title: "RNAseq analysis - PCA-quality filtered samples"
+author: "Holly Pinkney"
+date: "2024-05-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+```{r packages, warning = FALSE, message = FALSE}
+library(DESeq2)
+library(factoextra)
+library(tidyverse)
+library(gplots)
+library(rtracklayer)
+library(ggrepel)
+library(RColorBrewer)
+library(viridis)
+library(gridExtra)
+library(org.Mm.eg.db)
+library(clusterProfiler)
+library(DOSE)
+library(pathview)
+library(ReactomePA)
+```
+
+# Setup
+Load in the sample sheet and counts files, convert the counts files to a matrix
+
+## 1. Sample sheet 
+This is based on the excel spreadsheet provided by Lisa. It also has some extra information which is used later in the analysis.
+```{r sampleSheet}
+sample_sheet <- read.csv("data/sample_sheet.csv")
+sample_sheet[1] <- NULL
+
+names(sample_sheet)[3] <- "Treatment"
+names(sample_sheet)[1] <- "LibraryID"
+
+#ensure the main comparisons are factors
+sample_sheet$Sex <- factor(sample_sheet$Sex)
+sample_sheet$Treatment <- factor(sample_sheet$Treatment)
+
+
+mapStats <- read.csv("data/mappingStats.csv", header = T)
+
+```
+
+## 2. Make counts matrix
+This uses counts outputs (.tab files) produced by STAR aligner using `--quantMode GeneCounts`. It is comparable to counts files produced by `HTseq count`. 
+```{r countsMatrix}
+# Get the counts files
+fileList <- list.files( path = "data/", pattern = "*ReadsPerGene.out.tab$", full.names = TRUE )
+
+# read in the table but skip the first 4 metadata lines
+counts.files <- lapply( fileList, read.table, skip = 4 )
+
+#grab the second column of the dataframe (unstranded counts)
+counts <- as.data.frame( sapply( counts.files, function(x) x[ , 2 ] ) )
+
+#create colnames for the counts matrix from the fileList:
+  #removing the long unnecessary strings and replacing them with nothing
+fileList <- gsub( "[_]ReadsPerGene[.]out[.]tab", "", fileList )
+fileList <- gsub( "[.][.][/]data[/][/]", "", fileList )
+sample_sheet$origID <- fileList
+
+  # setting the colNames
+colnames(counts) <- fileList
+
+#add in the gene names as rownames (they are in the same order across all samples)
+row.names(counts) <- counts.files[[1]]$V1
+
+```
+
+# Visualisation of data
+```{r prepForVisualisation, warning=FALSE}
+#make DEseq object to assist with viewing the data
+dds <- DESeqDataSetFromMatrix(countData = counts, 
+                              colData = sample_sheet, 
+                              design = ~ 0+Group) # Each sex has an associated treatment variable - see "Group" column in sample sheet
+
+#pre-filtering genes with less than 10 counts in at least 2 samples
+nrow(dds)
+keep <- rowSums(counts(dds) >= 10) >= 2
+dds <- dds[keep,]
+nrow(dds) # this reduced the dataset from 57k genes to 17k genes. 
+
+# Normalise for visualisation purposes 
+#(DESeq does its own normalisation step so don't need to use this as input to DE analysis)
+vst <- vst(dds, blind = F)
+```
+
+* Pre-filtering steps reducted the genes to look at from 57k genes to 17k genes. NOTE: I was concerned by this, but Nora said she wasn't surprised by this.
+* The genes were removed if they did not have 10 counts in at least 2 samples. (This is a little less stringent than before, where they had to be in at least 5 samples)
+
+### 1. Elbow & RLE plots
+```{r elbowAndRLE}
+# look at variability captured across PCs
+pca <- prcomp(t(assay(vst)))
+prop_var <- pca$sdev^2 / sum(pca$sdev^2)
+
+par(mfrow=c(1,2))
+plot(prop_var, type = "b", xlab = "PC", ylab = "Proportion of Variance")
+
+logEst <- rlog(dds)
+median_counts <- apply(assay(logEst), 2, median) #gets the median counts per sample (i.e. column - specified as "2")
+rld_norm <- assay(logEst) - median_counts
+boxplot(rld_norm, las = 2)
+par(mfrow=c(1,1))
+```
+
+* Most of the variation is captured in the first two PCs, so we know we can visualise well on a PCA plot of PC1 vs PC2. 
+* RLE shows no batch effects. 
+
+### 2. PCA
+The PCA plot is used to look similarity between samples. Based on this experiment, we would expect to see differences between males and females and would hope to see differences between treatment groups (HFHS dam and Control dam)
+```{r PCA, message=FALSE}
+# plot PCA
+pcaData <- plotPCA(vst, intgroup = c("Treatment", "Sex"), returnData = TRUE)
+
+#sort out the labels - use RegEx to extract the digits that are after an underscore and before _ReadsPerGene
+pcaData <- pcaData %>%
+  mutate(LibID = str_extract(name, "(?<=_)(\\d+)$" ))
+pcaData$LibID <- ifelse(is.na(pcaData$LibID), "femextra", pcaData$LibID)
+
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+
+ggplot(pcaData, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+    ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+    coord_fixed() +
+    ggtitle("PCA plot")+
+  scale_color_viridis(option = "D", discrete = T)+
+  theme_minimal() 
+```
+
+* The PCA plot we see is not separating how we would expect. Investigate by correlating the PCA with different sample quality metrics.
+
+### 3. Quality stats
+#### Preparing PCA embeddings
+```{r mapStats}
+pc_loadings <- data.frame(pca$x)
+pc_loadings$LibraryID <- rownames(pc_loadings) 
+pc_loadings <- pc_loadings %>%
+  mutate(LibraryID = str_extract(LibraryID, "(?<=_)(\\d+)$" ))
+pc_loadings$LibraryID <- ifelse(is.na(pc_loadings$LibraryID), "femextra", pc_loadings$LibraryID)
+
+merged_data <- merge(pc_loadings, mapStats, by = "LibraryID")
+corr_PC1 <- cor(merged_data$PC1, merged_data$PercentUniqMapped)
+corr_PC2 <- cor(merged_data$PC2, merged_data$PercenMultiMap)
+```
+#### Percent of reads uniquely mapped
+```{r percentUniq}
+
+p1 <- ggplot(merged_data, aes(x = PC1, y = PC2, colour = PercentUniqMapped)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label=LibraryID), max.overlaps = 40)+
+  scale_color_viridis_c(option = "B")+
+  labs(
+    title = "PCA plot: unique mapping",
+    x = paste0("PC1 (", round(prop_var[1] * 100, 1), "%)"),
+    y = paste0("PC2 (", round(prop_var[2] * 100, 1), "%)"),
+    colour = "% reads uniquely mapped") +
+  theme_minimal()
+```
+
+#### Percent of reads multimapping
+```{r percentMultimap}
+p2 <- ggplot(merged_data, aes(x = PC1, y = PC2, colour = PercenMultiMap)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label=LibraryID), max.overlaps = 40)+
+  scale_color_viridis_c(option = "B", limits = c(0,30)) +
+  labs(
+    title = "PCA plot: multimapping",
+    x = paste0("PC1 (", round(prop_var[1] * 100, 1), "%)"),
+    y = paste0("PC2 (", round(prop_var[2] * 100, 1), "%)"),
+    colour = "% reads mapping to >10 loci") +
+  theme_minimal()
+```
+
+#### Percent of reads too short to map
+```{r percentTooshort}
+  
+p3 <- ggplot(merged_data, aes(x = PC1, y = PC2, colour = PercentTooShort)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label=LibraryID), max.overlaps = 40)+
+  scale_color_viridis_c(option = "B") +
+  labs(
+    title = "PCA plot: reads too short",
+    x = paste0("PC1 (", round(prop_var[1] * 100, 1), "%)"),
+    y = paste0("PC2 (", round(prop_var[2] * 100, 1), "%)"),
+    colour = "% too short to map") +
+  theme_minimal()
+
+grid.arrange(arrangeGrob(p1, p2, p3, nrow = 3))
+```
+
+* These figures show the same samples grouping together with higher percentages of mapping quality issues. (NOTE: in PCA plot: multimapping, library 3 has > 30% reads mapping to >10 loci)
+* Based on these metrics alone, sample 1 seems okay, but because it clusters consistently with the poor quality samples I am assuming something else is contributing to it being of poor quality and decided to still remove it.
+* Sample 3 seems to be distinguished from the poor quality samples on the left by being of even worse quality so will also remove this.
+* Next will filter the samples, keeping the ones in the bottom right corner and see if we can find any signal. 
+
+# Quality Filter based on PCA
+```{r filtData, warning=FALSE}
+problem_sample_IDs <- c("1", "3", "4", "6", "9", "10", "12", "15", "23", "13", "18", "24")
+problem_samples <- sample_sheet$origID[sample_sheet$LibraryID %in% problem_sample_IDs]
+
+
+problem_sample_IDs <- which(sample_sheet$LibraryID %in% problem_sample_IDs)
+sample_sheet_filt <- sample_sheet[-problem_sample_IDs, ]
+
+# Identify columns (samples) in the counts matrix to be removed
+cols_to_remove <- which(colnames(counts) %in% problem_samples)
+counts_filt <- counts[, -cols_to_remove]
+
+
+dds <- DESeqDataSetFromMatrix(countData = counts_filt, 
+                              colData = sample_sheet_filt, 
+                              design = ~0+Group) # Each sex has an associated treatment variable - see "Group" column in sample sheet
+# Normalise for visualisation purposes 
+#(DESeq does its own normalisation step so don't need to use this as input to DE analysis)
+vst <- vst(dds, blind = F)
+```
+
+## Visualisation post-filtering
+### 1. Elbow & RLE plots
+```{r elbowAndRLEagain}
+# look at variability captured across PCs in the heavily filtered object
+pca <- prcomp(t(assay(vst)))
+prop_var <- pca$sdev^2 / sum(pca$sdev^2)
+
+par(mfrow=c(1,2))
+plot(prop_var, type = "b", xlab = "PC", ylab = "Proportion of Variance")
+
+logEst <- rlog(dds)
+median_counts <- apply(assay(logEst), 2, median) #gets the median counts per sample (i.e. column - specified as "2")
+rld_norm <- assay(logEst) - median_counts
+boxplot(rld_norm, las = 2)
+par(mfrow=c(1,1))
+```
+
+* Once again the QC plots still look fine, even with less samples to compare (so smaller differences would be obvious)
+
+### 2. PCA 
+```{r PCAfilt, message=FALSE}
+pca <- prcomp(t(assay(vst)))
+prop_var <- pca$sdev^2 / sum(pca$sdev^2)
+
+# plot PCA
+pcaData <- plotPCA(vst, intgroup = c("Treatment", "Sex"), returnData = TRUE)
+
+# sort out the labels
+# use RegEx to extract the digits that are after an underscore and before _ReadsPerGene
+pcaData <- pcaData %>%
+  mutate(LibID = str_extract(name, "(?<=_)(\\d+)$" ))
+pcaData$LibID <- ifelse(is.na(pcaData$LibID), "femextra", pcaData$LibID)
+
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+
+ggplot(pcaData, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+    ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+    coord_fixed() +
+    ggtitle("PCA plot, filtered")+
+  scale_color_viridis(option = "D", discrete = T)+
+  theme_minimal()
+
+```
+
+* Now we can see some separation by treatment. There is also some separation by sex in PC2 - although the treatment effect is greater. Could consider pooling M&F samples for higher power.
+* Another thought - were the mice with HFHS dams more likely to be obese? And could this also result in a change in size in the pancreas? As more samples were successfully collected and sequenced for these mice.
+
+# Differential expression analysis
+* Run DESeq2 to examine differentially expressed genes between the two groups.
+
+## Run DESeq2
+```{r DEseq, message=FALSE}
+# Run differential expression
+dds <- DESeq(dds)
+resultsNames(dds)
+
+# Get annotation info to put gene names into results table later
+gtf <- rtracklayer::import('data/gencode.vM34.annotation.gtf')
+gtf_df = as.data.frame(gtf)
+gtf_df <- gtf_df %>% dplyr::select(gene_id, gene_name, seqnames)
+gtf_df <- unique(gtf_df)
+```
+
+## DESeq2 Results
+### 1. Males - HFHS dam vs Control dam
+```{r DESeqResultsM}
+
+# Get the results for males
+male_res <- DESeq2::results(dds, c("Group", "Male.HFHS", "Male.Control"))
+male_res <- na.omit(male_res)
+male_res <- male_res[order(male_res$padj),]
+summary(male_res)
+```
+
+* General stats for the results output before filtering for significance and fold change. 
+
+```{r DEseqResultsMcont}
+male_res_outs <- rownames_to_column(as.data.frame(male_res), var = "gene_id")
+male_res_outs <- merge(male_res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+male_res_outs <- male_res_outs[order(male_res_outs$padj), ]
+head(male_res_outs)
+```
+
+* A quick look at the 10 most significantly differentially expressed genes 
+* Sorted by adjusted p-value
+* Not sorted for log2 Fold Change (i.e. can be up or down)
+
+### 2. Females - HFHS dam vs Control dam
+```{r DESeqResultsF}
+#Get the results for females
+female_res <- DESeq2::results(dds, c("Group", "Female.HFHS", "Female.Control"))
+female_res <- na.omit(female_res)
+female_res <- female_res[order(female_res$padj),]
+summary(female_res)
+```
+
+* General stats for the results output before filtering for significance and fold change. 
+
+```{r DESeqResultsFcont}
+female_res_outs <- rownames_to_column(as.data.frame(female_res), var = "gene_id")
+female_res_outs <- merge(female_res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+female_res_outs <- female_res_outs[order(female_res_outs$padj), ]
+head(female_res_outs)
+```
+
+* A quick look at the 10 most significantly differentially expressed genes 
+* Sorted by adjusted p-value
+* Not sorted for log2 Fold Change (i.e. can be up or down)
+
+### 3. Sanity Check - Male Control dam vs Female Control dam
+```{r DESeqResultsControls}
+# Get the results for controls (sanity check)
+control_res <- DESeq2::results(dds, c("Group", "Male.Control", "Female.Control"))
+control_res <- na.omit(control_res)
+control_res <- control_res[order(control_res$padj),]
+summary(control_res)
+```
+
+* General stats for the results output before filtering for significance and fold change. 
+* Would we usually expect a bigger difference between Male and Female pancreas cells than this or not?
+
+```{r DESeqResultsControlscont}
+control_res_outs <- rownames_to_column(as.data.frame(control_res), var = "gene_id")
+control_res_outs <- merge(control_res_outs, gtf_df, by = "gene_id", all.x = TRUE)
+control_res_outs <- control_res_outs[order(control_res_outs$padj), ]
+head(control_res_outs)
+```
+
+* Are these genes we would expect to be changed between male and female pancreases?
+* Since there is so little difference between the groups though, we can compare treatment effect independent of sex to get a bigger sample size per group. 
+* This analysis assumes (based on the differential expression findings) that the sex-dependent signal is less prominent than the treatment signal.
+
+## Run DESeq2 on treatment group independent of sex
+```{r DEseqAllvsAll, message=FALSE}
+ddsAllvAll <- DESeqDataSetFromMatrix(countData = counts_filt, 
+                              colData = sample_sheet_filt, 
+                              design = ~ 0+Treatment)
+
+ddsAllvAll <- DESeq(ddsAllvAll)
+resultsNames(ddsAllvAll)
+```
+
+### Results - HFHS dam vs Control dam (Males & Females together)
+```{r DEseqResultsAll}
+# Compare all HFHS vs all Controls:
+all.HFHS_vs_all.Control <- DESeq2::results(ddsAllvAll, c("Treatment", "HFHS", "Control"))
+all.HFHS_vs_all.Control <- na.omit(all.HFHS_vs_all.Control)
+all.HFHS_vs_all.Control <- all.HFHS_vs_all.Control[order(all.HFHS_vs_all.Control$padj),]
+summary(all.HFHS_vs_all.Control)
+```
+
+* General stats for the results output before filtering for significance and fold change. 
+
+```{r DEseqResultsAllcont}
+all.HFHS_vs_all.Control_outs <- rownames_to_column(as.data.frame(all.HFHS_vs_all.Control), var = "gene_id")
+all.HFHS_vs_all.Control_outs <- merge(all.HFHS_vs_all.Control_outs, gtf_df, by = "gene_id", all.x = TRUE)
+all.HFHS_vs_all.Control_outs <- all.HFHS_vs_all.Control_outs[order(all.HFHS_vs_all.Control_outs$padj),]
+head(all.HFHS_vs_all.Control_outs)
+```
+
+* A quick look at the 10 most significantly differentially expressed genes 
+* Sorted by adjusted p-value
+* Not sorted for log2 Fold Change (i.e. can be up or down)
+
+## Look at the p-value distributions for each comparison
+```{r pvalDistrb}
+
+# look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,4))
+
+hist(male_res$pvalue[male_res$baseMean > 1], breaks = 0:20/20, main="Male Res", xlab="P-value")
+hist(female_res$pvalue[female_res$baseMean > 1], breaks = 0:20/20, main="Female Res", xlab="P-value")
+hist(all.HFHS_vs_all.Control$pvalue[all.HFHS_vs_all.Control$baseMean > 1], breaks = 0:20/20, main = "All HFHS vs All Control", xlab = "P-value")
+hist(control_res$pvalue[control_res$baseMean > 1], breaks = 0:20/20, main = "Control Res", xlab = "P-value")
+
+par(mfrow=c(1,1))
+
+```
+
+* P-value distributions now as we would expect - fewer differences between Male vs Female controls, but quite a lot for treatment vs control in males and females.
+
+## Write out results tables
+```{r WriteResultsTables}
+
+# write out csvs for further investigation
+write.csv(male_res_outs, file = "output/QCfilt_M.HFHS_vs_M.Control_DESeq2.csv")
+write.csv(female_res_outs, file = "output/QCfilt_F.HFHS_vs_F.Control_DESeq2.csv")
+write.csv(all.HFHS_vs_all.Control_outs, file = "output/QCfilt_all.HFHS_vs_all.Control.csv")
+write.csv(control_res_outs, file = "output/QCfilt_M.Control_vs_F.Control_DESeq2.csv")
+```
+
+* Now differential expression analysis is done successfully, lets see if we can find any pathways that are enriched using KEGG and Reactome.
+
+# Pathway analysis
+
+* Will KEGG to perform the pathway analysis.
+
+## Females - HFHS dam vs Control Dam
+```{r pathwayAnalysisF, warning=FALSE, message=FALSE}
+## FEMALES
+# Data preparation
+f.sig_genes <- subset(female_res, padj < 0.05)
+f.gene_list <- f.sig_genes$log2FoldChange
+names(f.gene_list) <- rownames(f.sig_genes)
+f.gene_list_cleaned <- sub("\\..*", "", names(f.gene_list))
+f.gene_ids <- bitr(f.gene_list_cleaned, fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Mm.eg.db")
+names(f.gene_list) <- f.gene_ids$ENTREZID
+
+# Reactome pathway enrichment
+f.kegg_enrich <- enrichKEGG(gene = names(f.gene_list), pvalueCutoff = 0.05, organism = "mmu")
+```
+
+## Females - Pathway analysis results
+* The plot shows the top 10 pathways enriched, the remaining pathways can be found in the output csv file.
+```{r fPathwayRes}
+# View results
+dotplot(f.kegg_enrich, showCategory=10) + ggtitle("KEGG Pathway Enrichment, F.HFHS vs F.Control")
+write_csv(f.kegg_enrich@result, file = "output/QCfilt_F.HFHS_vs_F.Control_KEGGPathways.csv")
+```
+
+## Males - HFHS dam vs Control dam
+```{r pathwayAnalysisM, warning=FALSE, message=FALSE}
+## MALES
+# Data preparation
+m.sig_genes <- subset(male_res, padj < 0.05)
+m.gene_list <- m.sig_genes$log2FoldChange
+names(m.gene_list) <- rownames(m.sig_genes)
+m.gene_list_cleaned <- sub("\\..*", "", names(m.gene_list))
+m.gene_ids <- bitr(m.gene_list_cleaned, fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Mm.eg.db")
+names(m.gene_list) <- m.gene_ids$ENTREZID
+
+# Reactome pathway enrichment
+m.kegg_enrich <- enrichKEGG(gene = names(m.gene_list), pvalueCutoff = 0.05, organism = "mmu")
+```
+
+## Males - Pathway analysis results
+```{r mPathwayRes}
+# View results
+dotplot(m.kegg_enrich, showCategory=10) + ggtitle("KEGG Pathway Enrichment, M.HFHS vs M.Control")
+write_csv(m.kegg_enrich@result, file = "output/QCfilt_M.HFHS_vs_M.Control_KEGGPathways.csv")
+```
+
+## All vs all - HFHS dam vs Control dam (Males & Females together)
+```{r pathwayAnalysisAll, warning=FALSE, message=FALSE}
+## ALL VS ALL
+# Data preparation
+all.sig_genes <- subset(all.HFHS_vs_all.Control, padj < 0.05)
+all.gene_list <- all.sig_genes$log2FoldChange
+names(all.gene_list) <- rownames(all.sig_genes)
+all.gene_list_cleaned <- sub("\\..*", "", names(all.gene_list))
+all.gene_ids <- bitr(all.gene_list_cleaned, fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Mm.eg.db")
+names(all.gene_list) <- all.gene_ids$ENTREZID
+
+# Reactome pathway enrichment
+all.kegg_enrich <- enrichKEGG(gene = names(all.gene_list), pvalueCutoff = 0.05, organism = "mmu")
+```
+
+```{r allPathwayRes}
+# View results
+dotplot(all.kegg_enrich, showCategory=10) + ggtitle("KEGG Pathway Enrichment, all.HFHS vs all. Control")
+write_csv(all.kegg_enrich@result, file = "output/QCfilt_ALL.HFHS_vs_ALL.Control_KEGGPathways.csv")
+```
+
+* Unsure how valid these results are, but putting the males and females together has a better looking figure.

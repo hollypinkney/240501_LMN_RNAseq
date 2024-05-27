@@ -569,4 +569,4 @@ topGO(go_results)
 ```
 
 * No statistically significant GO terms associated with DE genes between the two groups. 
-* Very likely testing noise
+* Very likely something non-biological contributing to difference.

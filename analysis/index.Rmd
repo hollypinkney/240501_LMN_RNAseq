@@ -11,12 +11,20 @@ editor_options:
 # Assessment of the effect of a maternal HFHS diet on offspring. 
 * Bioinformatician: Holly Pinkney
 * For: Lisa Nicholas
-* Date: 30th April 2024
+* Date: 27 May 2024
 
 # Results
-* Results for all analysis can be found [here](RNAseq_analysis.html).
+* Results for the initial analysis (April 2024) can be found [here](RNAseq_analysis.html).
   + Ran DESeq2, EdgeR and Limma. This compares male offspring from HFHS dams, vs Control dams, and separately, female offspring from HFHS dams vs Control dams. Very few genes were significantly differentially expressed.
   + Performed the same analysis, but with sample 3 (outlier) removed (comparisons run with DESeq2). Very similar results as above.
   + Initial and filtered analysis showed that the groups were separating by something, but this was not sex or treatment effect. In order to determine what was causing the difference, groups were determined by calculating poisson distances and identifying differentially expressed genes.
   + Go terms for these differences were investigated but none were statistically significant.
+  
+* Results for updated analysis (May 2024) can be found [here](RNAseq_analysis_QUALITY_FILT.html)
+  + Investigated a variety of metrics to ascertain what is causing the separation on the PCA
+  + Identified sample quality as the likely cause.
+  + Filtered out the poor quality samples (stringently this time). Samples now separate by treatment group.
+  + Ran differential expression analysis dependent and independent of sex.
+  + Performed pathway analysis on DE genes between groups.
+  
 
