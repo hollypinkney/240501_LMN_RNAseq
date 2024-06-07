@@ -9,6 +9,11 @@ navbar:
     href: about.html
   - text: License
     href: license.html
+
+  right:
+  -  icon: fa-github
+  -  text: Source code
+     href: https://github.com/hollypinkney/240501_LMN_RNAseq
 output:
   workflowr::wflow_html:
     toc: yes

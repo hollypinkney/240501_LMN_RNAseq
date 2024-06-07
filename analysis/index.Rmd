@@ -26,5 +26,7 @@ editor_options:
   + Filtered out the poor quality samples (stringently this time). Samples now separate by treatment group.
   + Ran differential expression analysis dependent and independent of sex.
   + Performed pathway analysis on DE genes between groups.
-  
+
+* Results for updated analysis including sample 1 can be found [here](RNAseq_QUALITY_FILT+1.html).
+  + Lisa to see if males results + all combined results still make sense.
 
