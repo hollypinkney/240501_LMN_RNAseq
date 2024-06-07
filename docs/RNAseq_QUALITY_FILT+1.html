@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Holly Pinkney" />
+
+<meta name="date" content="2024-05-20" />
+
+<title>RNAseq analysis - PCA-quality filtered samples</title>
+
+<script src="site_libs/header-attrs-2.27/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.4.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">LMN_RNAseq</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a>
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/hollypinkney/240501_LMN_RNAseq">Source code</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">RNAseq analysis - PCA-quality filtered
+samples</h1>
+<h4 class="author">Holly Pinkney</h4>
+<h4 class="date">2024-05-20</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2024-06-07
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>240501_LMN_RNAseq/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.1). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20240501code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20240501)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20240501code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20240501)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree790c07b76991714bb5e27f39af00ed12bceda63btargetblank790c07ba">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/790c07b76991714bb5e27f39af00ed12bceda63b" target="_blank">790c07b</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomhollypinkney240501LMNRNAseqtree790c07b76991714bb5e27f39af00ed12bceda63btargetblank790c07ba"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/tree/790c07b76991714bb5e27f39af00ed12bceda63b" target="_blank">790c07b</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+
+Untracked files:
+    Untracked:  code/STAR.sh
+    Untracked:  code/cutadapt.sh
+    Untracked:  code/fastqc.sh
+    Untracked:  code/job_picard.sh
+    Untracked:  code/mappingStats.sh
+    Untracked:  code/picard_markDups.sh
+    Untracked:  data/01_trimmed_S250076152_L01_1_Dedup.out.bam
+    Untracked:  data/01_trimmed_S250076152_L01_1_ReadsPerGene.out.tab
+    Untracked:  data/02_trimmed_S250076152_L01_2_Dedup.out.bam
+    Untracked:  data/02_trimmed_S250076152_L01_2_ReadsPerGene.out.tab
+    Untracked:  data/03_rimmed_S250076152_L01_3_Dedup.out.bam
+    Untracked:  data/03_trimmed_S250076152_L01_3_ReadsPerGene.out.tab
+    Untracked:  data/04_trimmed_S250076152_L01_4_ReadsPerGene.out.tab
+    Untracked:  data/05_trimmed_S250076152_L01_4_Dedup.out.bam
+    Untracked:  data/05_trimmed_S250076152_L01_6_Dedup.out.bam
+    Untracked:  data/05_trimmed_S250076152_L01_6_ReadsPerGene.out.tab
+    Untracked:  data/06_trimmed_S250076152_L01_7_Dedup.out.bam
+    Untracked:  data/06_trimmed_S250076152_L01_7_ReadsPerGene.out.tab
+    Untracked:  data/07_trimmed_S250076152_L01_8_Dedup.out.bam
+    Untracked:  data/07_trimmed_S250076152_L01_8_ReadsPerGene.out.tab
+    Untracked:  data/08_trimmed_S250076152_L01_9_Dedup.out.bam
+    Untracked:  data/08_trimmed_S250076152_L01_9_ReadsPerGene.out.tab
+    Untracked:  data/09_trimmed_S250076152_L01_10_Dedup.out.bam
+    Untracked:  data/09_trimmed_S250076152_L01_10_ReadsPerGene.out.tab
+    Untracked:  data/10_trimmed_S250076152_L01_12_Dedup.out.bam
+    Untracked:  data/10_trimmed_S250076152_L01_12_ReadsPerGene.out.tab
+    Untracked:  data/11_trimmed_S250076152_L01_13_Dedup.out.bam
+    Untracked:  data/11_trimmed_S250076152_L01_13_ReadsPerGene.out.tab
+    Untracked:  data/12_trimmed_S250076152_L01_15_Dedup.out.bam
+    Untracked:  data/12_trimmed_S250076152_L01_15_ReadsPerGene.out.tab
+    Untracked:  data/13_trimmed_S250076152_L01_17_Dedup.out.bam
+    Untracked:  data/13_trimmed_S250076152_L01_17_ReadsPerGene.out.tab
+    Untracked:  data/14_trimmed_S250076152_L01_18_Dedup.out.bam
+    Untracked:  data/14_trimmed_S250076152_L01_18_ReadsPerGene.out.tab
+    Untracked:  data/15_trimmed_S250076152_L01_19_Dedup.out.bam
+    Untracked:  data/15_trimmed_S250076152_L01_19_ReadsPerGene.out.tab
+    Untracked:  data/16_trimmed_S250076152_L01_20_Dedup.out.bam
+    Untracked:  data/16_trimmed_S250076152_L01_20_ReadsPerGene.out.tab
+    Untracked:  data/17_trimmed_S250076152_L01_21_Dedup.out.bam
+    Untracked:  data/17_trimmed_S250076152_L01_21_ReadsPerGene.out.tab
+    Untracked:  data/18_trimmed_S250076152_L01_23_Dedup.out.bam
+    Untracked:  data/18_trimmed_S250076152_L01_23_ReadsPerGene.out.tab
+    Untracked:  data/19_trimmed_S250076152_L01_24_Dedup.out.bam
+    Untracked:  data/19_trimmed_S250076152_L01_24_ReadsPerGene.out.tab
+    Untracked:  data/20_trimmed_S250076152_L01_Femextra_Dedup.out.bam
+    Untracked:  data/20_trimmed_S250076152_L01_Femextra_ReadsPerGene.out.tab
+    Untracked:  data/LMN_sequencing_summary_HP.xlsx
+    Untracked:  data/Sample ID_8 week offspring beta-cells_mRNA-seq.xlsx
+    Untracked:  data/gencode.vM34.annotation.gtf
+    Untracked:  data/mappingStats.csv
+    Untracked:  data/sample_sheet.csv
+    Untracked:  output/
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/RNAseq_QUALITY_FILT+1.Rmd</code>)
+and HTML (<code>docs/RNAseq_QUALITY_FILT+1.html</code>) files. If you’ve
+configured a remote Git repository (see <code>?wflow_git_remote</code>),
+click on the hyperlinks in the table below to view the files as they
+were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/hollypinkney/240501_LMN_RNAseq/blob/790c07b76991714bb5e27f39af00ed12bceda63b/analysis/RNAseq_QUALITY_FILT+1.Rmd" target="_blank">790c07b</a>
+</td>
+<td>
+Holly Pinkney
+</td>
+<td>
+2024-06-07
+</td>
+<td>
+wflow_publish(files = "analysis//RNAseq_QUALITY_FILT+1.Rmd")
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="load-packages" class="section level1">
+<h1>Load packages</h1>
+<pre class="r"><code>library(DESeq2)
+library(factoextra)
+library(tidyverse)
+library(gplots)
+library(rtracklayer)
+library(ggrepel)
+library(RColorBrewer)
+library(viridis)
+library(gridExtra)
+library(org.Mm.eg.db)
+library(clusterProfiler)
+library(DOSE)
+library(pathview)
+library(ReactomePA)</code></pre>
+</div>
+<div id="setup" class="section level1">
+<h1>Setup</h1>
+<p>Load in the sample sheet and counts files, convert the counts files
+to a matrix</p>
+<div id="sample-sheet" class="section level2">
+<h2>1. Sample sheet</h2>
+<p>This is based on the excel spreadsheet provided by Lisa. It also has
+some extra information which is used later in the analysis.</p>
+<pre class="r"><code>sample_sheet &lt;- read.csv(&quot;data/sample_sheet.csv&quot;)
+sample_sheet[1] &lt;- NULL
+
+names(sample_sheet)[3] &lt;- &quot;Treatment&quot;
+names(sample_sheet)[1] &lt;- &quot;LibraryID&quot;
+
+#ensure the main comparisons are factors
+sample_sheet$Sex &lt;- factor(sample_sheet$Sex)
+sample_sheet$Treatment &lt;- factor(sample_sheet$Treatment)
+
+
+mapStats &lt;- read.csv(&quot;data/mappingStats.csv&quot;, header = T)</code></pre>
+</div>
+<div id="make-counts-matrix" class="section level2">
+<h2>2. Make counts matrix</h2>
+<p>This uses counts outputs (.tab files) produced by STAR aligner using
+<code>--quantMode GeneCounts</code>. It is comparable to counts files
+produced by <code>HTseq count</code>.</p>
+<pre class="r"><code># Get the counts files
+fileList &lt;- list.files( path = &quot;data/&quot;, pattern = &quot;*ReadsPerGene.out.tab$&quot;, full.names = TRUE )
+
+# read in the table but skip the first 4 metadata lines
+counts.files &lt;- lapply( fileList, read.table, skip = 4 )
+
+#grab the second column of the dataframe (unstranded counts)
+counts &lt;- as.data.frame( sapply( counts.files, function(x) x[ , 2 ] ) )
+
+#create colnames for the counts matrix from the fileList:
+  #removing the long unnecessary strings and replacing them with nothing
+fileList &lt;- gsub( &quot;[_]ReadsPerGene[.]out[.]tab&quot;, &quot;&quot;, fileList )
+fileList &lt;- gsub( &quot;[.][.][/]data[/][/]&quot;, &quot;&quot;, fileList )
+sample_sheet$origID &lt;- fileList
+
+  # setting the colNames
+colnames(counts) &lt;- fileList
+
+#add in the gene names as rownames (they are in the same order across all samples)
+row.names(counts) &lt;- counts.files[[1]]$V1</code></pre>
+</div>
+</div>
+<div id="visualisation-of-data" class="section level1">
+<h1>Visualisation of data</h1>
+<pre class="r"><code>#make DEseq object to assist with viewing the data
+dds &lt;- DESeqDataSetFromMatrix(countData = counts, 
+                              colData = sample_sheet, 
+                              design = ~ 0+Group) # Each sex has an associated treatment variable - see &quot;Group&quot; column in sample sheet
+
+#pre-filtering genes with less than 10 counts in at least 2 samples
+nrow(dds)</code></pre>
+<pre><code>[1] 57126</code></pre>
+<pre class="r"><code>keep &lt;- rowSums(counts(dds) &gt;= 10) &gt;= 2
+dds &lt;- dds[keep,]
+nrow(dds) # this reduced the dataset from 57k genes to 17k genes. </code></pre>
+<pre><code>[1] 17328</code></pre>
+<pre class="r"><code># Normalise for visualisation purposes 
+#(DESeq does its own normalisation step so don&#39;t need to use this as input to DE analysis)
+vst &lt;- vst(dds, blind = F)</code></pre>
+<ul>
+<li>Pre-filtering steps reducted the genes to look at from 57k genes to
+17k genes. NOTE: I was concerned by this, but Nora said she wasn’t
+surprised by this.</li>
+<li>The genes were removed if they did not have 10 counts in at least 2
+samples. (This is a little less stringent than before, where they had to
+be in at least 5 samples)</li>
+</ul>
+<div id="elbow-rle-plots" class="section level3">
+<h3>1. Elbow &amp; RLE plots</h3>
+<pre class="r"><code># look at variability captured across PCs
+pca &lt;- prcomp(t(assay(vst)))
+prop_var &lt;- pca$sdev^2 / sum(pca$sdev^2)
+
+par(mfrow=c(1,2))
+plot(prop_var, type = &quot;b&quot;, xlab = &quot;PC&quot;, ylab = &quot;Proportion of Variance&quot;)
+
+logEst &lt;- rlog(dds)
+median_counts &lt;- apply(assay(logEst), 2, median) #gets the median counts per sample (i.e. column - specified as &quot;2&quot;)
+rld_norm &lt;- assay(logEst) - median_counts
+boxplot(rld_norm, las = 2)</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/elbowAndRLE-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>par(mfrow=c(1,1))</code></pre>
+<ul>
+<li>Most of the variation is captured in the first two PCs, so we know
+we can visualise well on a PCA plot of PC1 vs PC2.</li>
+<li>RLE shows no batch effects.</li>
+</ul>
+</div>
+<div id="pca" class="section level3">
+<h3>2. PCA</h3>
+<p>The PCA plot is used to look similarity between samples. Based on
+this experiment, we would expect to see differences between males and
+females and would hope to see differences between treatment groups (HFHS
+dam and Control dam)</p>
+<pre class="r"><code># plot PCA
+pcaData &lt;- plotPCA(vst, intgroup = c(&quot;Treatment&quot;, &quot;Sex&quot;), returnData = TRUE)
+
+#sort out the labels - use RegEx to extract the digits that are after an underscore and before _ReadsPerGene
+pcaData &lt;- pcaData %&gt;%
+  mutate(LibID = str_extract(name, &quot;(?&lt;=_)(\\d+)$&quot; ))
+pcaData$LibID &lt;- ifelse(is.na(pcaData$LibID), &quot;femextra&quot;, pcaData$LibID)
+
+percentVar &lt;- round(100 * attr(pcaData, &quot;percentVar&quot;))
+
+ggplot(pcaData, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0(&quot;PC1: &quot;, percentVar[1], &quot;% variance&quot;)) +
+    ylab(paste0(&quot;PC2: &quot;, percentVar[2], &quot;% variance&quot;)) +
+    coord_fixed() +
+    ggtitle(&quot;PCA plot&quot;)+
+  scale_color_viridis(option = &quot;D&quot;, discrete = T)+
+  theme_minimal() </code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/PCA-1.png" width="672" style="display: block; margin: auto;" /></p>
+<ul>
+<li>The PCA plot we see is not separating how we would expect.
+Investigate by correlating the PCA with different sample quality
+metrics.</li>
+</ul>
+</div>
+<div id="quality-stats" class="section level3">
+<h3>3. Quality stats</h3>
+<div id="preparing-pca-embeddings" class="section level4">
+<h4>Preparing PCA embeddings</h4>
+<pre class="r"><code>pc_loadings &lt;- data.frame(pca$x)
+pc_loadings$LibraryID &lt;- rownames(pc_loadings) 
+pc_loadings &lt;- pc_loadings %&gt;%
+  mutate(LibraryID = str_extract(LibraryID, &quot;(?&lt;=_)(\\d+)$&quot; ))
+pc_loadings$LibraryID &lt;- ifelse(is.na(pc_loadings$LibraryID), &quot;femextra&quot;, pc_loadings$LibraryID)
+
+merged_data &lt;- merge(pc_loadings, mapStats, by = &quot;LibraryID&quot;)
+corr_PC1 &lt;- cor(merged_data$PC1, merged_data$PercentUniqMapped)
+corr_PC2 &lt;- cor(merged_data$PC2, merged_data$PercenMultiMap)</code></pre>
+</div>
+<div id="percent-of-reads-uniquely-mapped" class="section level4">
+<h4>Percent of reads uniquely mapped</h4>
+<pre class="r"><code>p1 &lt;- ggplot(merged_data, aes(x = PC1, y = PC2, colour = PercentUniqMapped)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label=LibraryID), max.overlaps = 40)+
+  scale_color_viridis_c(option = &quot;B&quot;)+
+  labs(
+    title = &quot;PCA plot: unique mapping&quot;,
+    x = paste0(&quot;PC1 (&quot;, round(prop_var[1] * 100, 1), &quot;%)&quot;),
+    y = paste0(&quot;PC2 (&quot;, round(prop_var[2] * 100, 1), &quot;%)&quot;),
+    colour = &quot;% reads uniquely mapped&quot;) +
+  theme_minimal()</code></pre>
+</div>
+<div id="percent-of-reads-multimapping" class="section level4">
+<h4>Percent of reads multimapping</h4>
+<pre class="r"><code>p2 &lt;- ggplot(merged_data, aes(x = PC1, y = PC2, colour = PercenMultiMap)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label=LibraryID), max.overlaps = 40)+
+  scale_color_viridis_c(option = &quot;B&quot;, limits = c(0,30)) +
+  labs(
+    title = &quot;PCA plot: multimapping&quot;,
+    x = paste0(&quot;PC1 (&quot;, round(prop_var[1] * 100, 1), &quot;%)&quot;),
+    y = paste0(&quot;PC2 (&quot;, round(prop_var[2] * 100, 1), &quot;%)&quot;),
+    colour = &quot;% reads mapping to &gt;10 loci&quot;) +
+  theme_minimal()</code></pre>
+</div>
+<div id="percent-of-reads-too-short-to-map" class="section level4">
+<h4>Percent of reads too short to map</h4>
+<pre class="r"><code>p3 &lt;- ggplot(merged_data, aes(x = PC1, y = PC2, colour = PercentTooShort)) +
+  geom_point(size = 3) +
+  geom_text_repel(aes(label=LibraryID), max.overlaps = 40)+
+  scale_color_viridis_c(option = &quot;B&quot;) +
+  labs(
+    title = &quot;PCA plot: reads too short&quot;,
+    x = paste0(&quot;PC1 (&quot;, round(prop_var[1] * 100, 1), &quot;%)&quot;),
+    y = paste0(&quot;PC2 (&quot;, round(prop_var[2] * 100, 1), &quot;%)&quot;),
+    colour = &quot;% too short to map&quot;) +
+  theme_minimal()
+
+grid.arrange(arrangeGrob(p1, p2, p3, nrow = 3))</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/percentTooshort-1.png" width="672" style="display: block; margin: auto;" /></p>
+<ul>
+<li>These figures show the same samples grouping together with higher
+percentages of mapping quality issues. (NOTE: in PCA plot: multimapping,
+library 3 has &gt; 30% reads mapping to &gt;10 loci)</li>
+<li>Based on these metrics alone, sample 1 seems okay, so per Lisa’s
+suggestion, will leave it in.</li>
+<li>Sample 3 seems to be distinguished from the poor quality samples on
+the left by being of even worse quality so will also remove this.</li>
+<li>Next will filter the samples, keeping the ones in the bottom right
+corner and see if we can find any signal.</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="quality-filter-based-on-pca" class="section level1">
+<h1>Quality Filter based on PCA</h1>
+<pre class="r"><code>problem_sample_IDs &lt;- c(&quot;3&quot;, &quot;4&quot;, &quot;6&quot;, &quot;9&quot;, &quot;10&quot;, &quot;12&quot;, &quot;15&quot;, &quot;23&quot;, &quot;13&quot;, &quot;18&quot;, &quot;24&quot;)
+problem_samples &lt;- sample_sheet$origID[sample_sheet$LibraryID %in% problem_sample_IDs]
+
+
+problem_sample_IDs &lt;- which(sample_sheet$LibraryID %in% problem_sample_IDs)
+sample_sheet_filt &lt;- sample_sheet[-problem_sample_IDs, ]
+
+# Identify columns (samples) in the counts matrix to be removed
+cols_to_remove &lt;- which(colnames(counts) %in% problem_samples)
+counts_filt &lt;- counts[, -cols_to_remove]
+
+
+dds &lt;- DESeqDataSetFromMatrix(countData = counts_filt, 
+                              colData = sample_sheet_filt, 
+                              design = ~0+Group) # Each sex has an associated treatment variable - see &quot;Group&quot; column in sample sheet
+# Normalise for visualisation purposes 
+#(DESeq does its own normalisation step so don&#39;t need to use this as input to DE analysis)
+vst &lt;- vst(dds, blind = F)</code></pre>
+<div id="visualisation-post-filtering" class="section level2">
+<h2>Visualisation post-filtering</h2>
+<div id="elbow-rle-plots-1" class="section level3">
+<h3>1. Elbow &amp; RLE plots</h3>
+<pre class="r"><code># look at variability captured across PCs in the heavily filtered object
+pca &lt;- prcomp(t(assay(vst)))
+prop_var &lt;- pca$sdev^2 / sum(pca$sdev^2)
+
+par(mfrow=c(1,2))
+plot(prop_var, type = &quot;b&quot;, xlab = &quot;PC&quot;, ylab = &quot;Proportion of Variance&quot;)
+
+logEst &lt;- rlog(dds)
+median_counts &lt;- apply(assay(logEst), 2, median) #gets the median counts per sample (i.e. column - specified as &quot;2&quot;)
+rld_norm &lt;- assay(logEst) - median_counts
+boxplot(rld_norm, las = 2)</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/elbowAndRLEagain-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>par(mfrow=c(1,1))</code></pre>
+<ul>
+<li>Once again the QC plots still look fine, even with less samples to
+compare (so smaller differences would be obvious)</li>
+</ul>
+</div>
+<div id="pca-1" class="section level3">
+<h3>2. PCA</h3>
+<pre class="r"><code>pca &lt;- prcomp(t(assay(vst)))
+prop_var &lt;- pca$sdev^2 / sum(pca$sdev^2)
+
+# plot PCA
+pcaData &lt;- plotPCA(vst, intgroup = c(&quot;Treatment&quot;, &quot;Sex&quot;), returnData = TRUE)
+
+# sort out the labels
+# use RegEx to extract the digits that are after an underscore and before _ReadsPerGene
+pcaData &lt;- pcaData %&gt;%
+  mutate(LibID = str_extract(name, &quot;(?&lt;=_)(\\d+)$&quot; ))
+pcaData$LibID &lt;- ifelse(is.na(pcaData$LibID), &quot;femextra&quot;, pcaData$LibID)
+
+percentVar &lt;- round(100 * attr(pcaData, &quot;percentVar&quot;))
+
+ggplot(pcaData, aes(x = PC1, y = PC2, color = Treatment, shape = Sex)) + 
+    geom_point(size =3) +
+    geom_text_repel(aes(label=LibID), max.overlaps = 40)+
+    xlab(paste0(&quot;PC1: &quot;, percentVar[1], &quot;% variance&quot;)) +
+    ylab(paste0(&quot;PC2: &quot;, percentVar[2], &quot;% variance&quot;)) +
+    coord_fixed() +
+    ggtitle(&quot;PCA plot, filtered&quot;)+
+  scale_color_viridis(option = &quot;D&quot;, discrete = T)+
+  theme_minimal()</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/PCAfilt-1.png" width="672" style="display: block; margin: auto;" /></p>
+<ul>
+<li>Now we can see some separation by treatment. There is also some
+separation by sex in PC2 - although the treatment effect is greater.
+Could consider pooling M&amp;F samples for higher power.</li>
+<li>Another thought - were the mice with HFHS dams more likely to be
+obese? And could this also result in a change in size in the pancreas?
+As more samples were successfully collected and sequenced for these
+mice.</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="differential-expression-analysis" class="section level1">
+<h1>Differential expression analysis</h1>
+<ul>
+<li>Run DESeq2 to examine differentially expressed genes between the two
+groups.</li>
+</ul>
+<div id="run-deseq2" class="section level2">
+<h2>Run DESeq2</h2>
+<pre class="r"><code># Run differential expression
+dds &lt;- DESeq(dds)
+resultsNames(dds)</code></pre>
+<pre><code>[1] &quot;GroupFemale.Control&quot; &quot;GroupFemale.HFHS&quot;    &quot;GroupMale.Control&quot;  
+[4] &quot;GroupMale.HFHS&quot;     </code></pre>
+<pre class="r"><code># Get annotation info to put gene names into results table later
+gtf &lt;- rtracklayer::import(&#39;data/gencode.vM34.annotation.gtf&#39;)
+gtf_df = as.data.frame(gtf)
+gtf_df &lt;- gtf_df %&gt;% dplyr::select(gene_id, gene_name, seqnames)
+gtf_df &lt;- unique(gtf_df)</code></pre>
+</div>
+<div id="deseq2-results" class="section level2">
+<h2>DESeq2 Results</h2>
+<div id="males---hfhs-dam-vs-control-dam" class="section level3">
+<h3>1. Males - HFHS dam vs Control dam</h3>
+<pre class="r"><code># Get the results for males
+male_res &lt;- DESeq2::results(dds, c(&quot;Group&quot;, &quot;Male.HFHS&quot;, &quot;Male.Control&quot;))
+male_res &lt;- na.omit(male_res)
+male_res &lt;- male_res[order(male_res$padj),]
+summary(male_res)</code></pre>
+<pre><code>
+out of 16365 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 1334, 8.2%
+LFC &lt; 0 (down)     : 1771, 11%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 5)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<ul>
+<li>General stats for the results output before filtering for
+significance and fold change.</li>
+</ul>
+<pre class="r"><code>male_res_outs &lt;- rownames_to_column(as.data.frame(male_res), var = &quot;gene_id&quot;)
+male_res_outs &lt;- merge(male_res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+male_res_outs &lt;- male_res_outs[order(male_res_outs$padj), ]
+head(male_res_outs)</code></pre>
+<pre><code>                    gene_id  baseMean log2FoldChange     lfcSE      stat
+4347  ENSMUSG00000026609.16  653.3228       2.706473 0.2458927 11.006724
+7438   ENSMUSG00000034612.8 1536.4063       2.519156 0.2453973 10.265624
+7550   ENSMUSG00000035000.9 1814.6188       1.992418 0.1985937 10.032632
+10029  ENSMUSG00000045871.6  852.4833       3.291106 0.3398341  9.684449
+4823  ENSMUSG00000027690.14 9349.1582       2.502854 0.2624453  9.536668
+8331  ENSMUSG00000038065.14  301.1710       2.395544 0.2549030  9.397867
+            pvalue         padj gene_name seqnames
+4347  3.546651e-28 5.804095e-24     Ush2a     chr1
+7438  1.006677e-24 8.237134e-21    Chst11    chr10
+7550  1.095564e-23 5.976302e-20      Dpp4     chr2
+10029 3.510976e-22 1.436428e-18   Slitrk6    chr14
+4823  1.474948e-21 4.827503e-18    Slc2a2     chr3
+8331  5.568060e-21 1.518688e-17     Mturn     chr6</code></pre>
+<ul>
+<li>A quick look at the 10 most significantly differentially expressed
+genes</li>
+<li>Sorted by adjusted p-value</li>
+<li>Not sorted for log2 Fold Change (i.e. can be up or down)</li>
+</ul>
+</div>
+<div id="females---hfhs-dam-vs-control-dam" class="section level3">
+<h3>2. Females - HFHS dam vs Control dam</h3>
+<pre class="r"><code>#Get the results for females
+female_res &lt;- DESeq2::results(dds, c(&quot;Group&quot;, &quot;Female.HFHS&quot;, &quot;Female.Control&quot;))
+female_res &lt;- na.omit(female_res)
+female_res &lt;- female_res[order(female_res$padj),]
+summary(female_res)</code></pre>
+<pre><code>
+out of 18822 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 1777, 9.4%
+LFC &lt; 0 (down)     : 1907, 10%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 3)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<ul>
+<li>General stats for the results output before filtering for
+significance and fold change.</li>
+</ul>
+<pre class="r"><code>female_res_outs &lt;- rownames_to_column(as.data.frame(female_res), var = &quot;gene_id&quot;)
+female_res_outs &lt;- merge(female_res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+female_res_outs &lt;- female_res_outs[order(female_res_outs$padj), ]
+head(female_res_outs)</code></pre>
+<pre><code>                    gene_id  baseMean log2FoldChange     lfcSE     stat
+4559  ENSMUSG00000026609.16  653.3228       2.669724 0.2177442 12.26083
+7819   ENSMUSG00000034612.8 1536.4063       2.681394 0.2211047 12.12726
+5060  ENSMUSG00000027690.14 9349.1582       2.658245 0.2393845 11.10450
+7593   ENSMUSG00000033849.4  203.0357       3.421360 0.3259199 10.49755
+7937   ENSMUSG00000035000.9 1814.6188       1.863378 0.1774304 10.50202
+12135 ENSMUSG00000057880.13 1922.9996       1.969303 0.1872226 10.51851
+            pvalue         padj gene_name seqnames
+4559  1.469936e-34 2.766714e-30     Ush2a     chr1
+7819  7.574077e-34 7.127964e-30    Chst11    chr10
+5060  1.192839e-28 7.483872e-25    Slc2a2     chr3
+7593  8.865503e-26 2.781108e-22   B3galt2     chr1
+7937  8.454756e-26 2.781108e-22      Dpp4     chr2
+12135 7.098397e-26 2.781108e-22      Abat    chr16</code></pre>
+<ul>
+<li>A quick look at the 10 most significantly differentially expressed
+genes</li>
+<li>Sorted by adjusted p-value</li>
+<li>Not sorted for log2 Fold Change (i.e. can be up or down)</li>
+</ul>
+</div>
+<div id="sanity-check---male-control-dam-vs-female-control-dam"
+class="section level3">
+<h3>3. Sanity Check - Male Control dam vs Female Control dam</h3>
+<pre class="r"><code># Get the results for controls (sanity check)
+control_res &lt;- DESeq2::results(dds, c(&quot;Group&quot;, &quot;Male.Control&quot;, &quot;Female.Control&quot;))
+control_res &lt;- na.omit(control_res)
+control_res &lt;- control_res[order(control_res$padj),]
+summary(control_res)</code></pre>
+<pre><code>
+out of 32949 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 4, 0.012%
+LFC &lt; 0 (down)     : 4, 0.012%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 0)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<ul>
+<li>General stats for the results output before filtering for
+significance and fold change.</li>
+<li>Would we usually expect a bigger difference between Male and Female
+pancreas cells than this or not?</li>
+</ul>
+<pre class="r"><code>control_res_outs &lt;- rownames_to_column(as.data.frame(control_res), var = &quot;gene_id&quot;)
+control_res_outs &lt;- merge(control_res_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+control_res_outs &lt;- control_res_outs[order(control_res_outs$padj), ]
+head(control_res_outs)</code></pre>
+<pre><code>                    gene_id    baseMean log2FoldChange     lfcSE      stat
+20438  ENSMUSG00000086503.5 10601.57494      -8.967350 1.4530120 -6.171559
+9226  ENSMUSG00000034990.16   106.58300       1.721833 0.3364856  5.117107
+5779  ENSMUSG00000027533.11    53.79384      -1.671087 0.3833767 -4.358863
+8020  ENSMUSG00000031837.15   154.35151       2.024334 0.4569795  4.429814
+13374 ENSMUSG00000050335.18    80.54056      -2.151359 0.4935823 -4.358662
+29757  ENSMUSG00000115543.2    33.48724       4.585555 1.0243847  4.476399
+            pvalue         padj     gene_name seqnames
+20438 6.761980e-10 2.228005e-05          Xist     chrX
+9226  3.102577e-07 5.111340e-03          Otoa     chr7
+5779  1.307399e-05 7.186164e-02         Fabp5     chr3
+8020  9.431450e-06 7.186164e-02        Necab2     chr8
+13374 1.308598e-05 7.186164e-02        Lgals3    chr14
+29757 7.591243e-06 7.186164e-02 B230362B09Rik    chr15</code></pre>
+<ul>
+<li>Are these genes we would expect to be changed between male and
+female pancreases?</li>
+<li>Since there is so little difference between the groups though, we
+can compare treatment effect independent of sex to get a bigger sample
+size per group.</li>
+<li>This analysis assumes (based on the differential expression
+findings) that the sex-dependent signal is less prominent than the
+treatment signal.</li>
+</ul>
+</div>
+</div>
+<div id="run-deseq2-on-treatment-group-independent-of-sex"
+class="section level2">
+<h2>Run DESeq2 on treatment group independent of sex</h2>
+<pre class="r"><code>ddsAllvAll &lt;- DESeqDataSetFromMatrix(countData = counts_filt, 
+                              colData = sample_sheet_filt, 
+                              design = ~ 0+Treatment)
+
+ddsAllvAll &lt;- DESeq(ddsAllvAll)
+resultsNames(ddsAllvAll)</code></pre>
+<pre><code>[1] &quot;TreatmentControl&quot; &quot;TreatmentHFHS&quot;   </code></pre>
+<div id="results---hfhs-dam-vs-control-dam-males-females-together"
+class="section level3">
+<h3>Results - HFHS dam vs Control dam (Males &amp; Females
+together)</h3>
+<pre class="r"><code># Compare all HFHS vs all Controls:
+all.HFHS_vs_all.Control &lt;- DESeq2::results(ddsAllvAll, c(&quot;Treatment&quot;, &quot;HFHS&quot;, &quot;Control&quot;))
+all.HFHS_vs_all.Control &lt;- na.omit(all.HFHS_vs_all.Control)
+all.HFHS_vs_all.Control &lt;- all.HFHS_vs_all.Control[order(all.HFHS_vs_all.Control$padj),]
+summary(all.HFHS_vs_all.Control)</code></pre>
+<pre><code>
+out of 20929 with nonzero total read count
+adjusted p-value &lt; 0.1
+LFC &gt; 0 (up)       : 3003, 14%
+LFC &lt; 0 (down)     : 4345, 21%
+outliers [1]       : 0, 0%
+low counts [2]     : 0, 0%
+(mean count &lt; 1)
+[1] see &#39;cooksCutoff&#39; argument of ?results
+[2] see &#39;independentFiltering&#39; argument of ?results</code></pre>
+<ul>
+<li>General stats for the results output before filtering for
+significance and fold change.</li>
+</ul>
+<pre class="r"><code>all.HFHS_vs_all.Control_outs &lt;- rownames_to_column(as.data.frame(all.HFHS_vs_all.Control), var = &quot;gene_id&quot;)
+all.HFHS_vs_all.Control_outs &lt;- merge(all.HFHS_vs_all.Control_outs, gtf_df, by = &quot;gene_id&quot;, all.x = TRUE)
+all.HFHS_vs_all.Control_outs &lt;- all.HFHS_vs_all.Control_outs[order(all.HFHS_vs_all.Control_outs$padj),]
+head(all.HFHS_vs_all.Control_outs)</code></pre>
+<pre><code>                    gene_id   baseMean log2FoldChange      lfcSE     stat
+3923   ENSMUSG00000024899.8 12050.3231       1.610921 0.07824372 20.58851
+4653  ENSMUSG00000026609.16   653.3228       2.679928 0.13138442 20.39761
+8009   ENSMUSG00000034612.8  1536.4063       2.611354 0.13014017 20.06570
+12560 ENSMUSG00000057880.13  1922.9996       1.908828 0.10958071 17.41938
+2369  ENSMUSG00000020917.18 36694.3939       1.241544 0.08434374 14.72004
+10635 ENSMUSG00000044468.15  1258.1874       1.326165 0.09080589 14.60440
+            pvalue         padj gene_name seqnames
+3923  3.479327e-94 7.281883e-90    Papss2    chr19
+4653  1.755877e-92 1.837437e-88     Ush2a     chr1
+8009  1.472027e-89 1.026935e-85    Chst11    chr10
+12560 5.881150e-68 3.077165e-64      Abat    chr16
+2369  4.793487e-49 2.006458e-45      Acly    chr11
+10635 2.632915e-48 9.184048e-45    Tent5c     chr3</code></pre>
+<ul>
+<li>A quick look at the 10 most significantly differentially expressed
+genes</li>
+<li>Sorted by adjusted p-value</li>
+<li>Not sorted for log2 Fold Change (i.e. can be up or down)</li>
+</ul>
+</div>
+</div>
+<div id="look-at-the-p-value-distributions-for-each-comparison"
+class="section level2">
+<h2>Look at the p-value distributions for each comparison</h2>
+<pre class="r"><code># look at p-val distributions in genes that are expressed at a base mean greater than 1
+par(mfrow=c(1,4))
+
+hist(male_res$pvalue[male_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Male Res&quot;, xlab=&quot;P-value&quot;)
+hist(female_res$pvalue[female_res$baseMean &gt; 1], breaks = 0:20/20, main=&quot;Female Res&quot;, xlab=&quot;P-value&quot;)
+hist(all.HFHS_vs_all.Control$pvalue[all.HFHS_vs_all.Control$baseMean &gt; 1], breaks = 0:20/20, main = &quot;All HFHS vs All Control&quot;, xlab = &quot;P-value&quot;)
+hist(control_res$pvalue[control_res$baseMean &gt; 1], breaks = 0:20/20, main = &quot;Control Res&quot;, xlab = &quot;P-value&quot;)</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/pvalDistrb-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>par(mfrow=c(1,1))</code></pre>
+<ul>
+<li>P-value distributions now as we would expect - fewer differences
+between Male vs Female controls, but quite a lot for treatment vs
+control in males and females.</li>
+</ul>
+</div>
+<div id="write-out-results-tables" class="section level2">
+<h2>Write out results tables</h2>
+<pre class="r"><code># write out csvs for further investigation
+write.csv(male_res_outs, file = &quot;output/QCfilt+1_M.HFHS_vs_M.Control_DESeq2.csv&quot;)
+write.csv(female_res_outs, file = &quot;output/QCfilt+1_F.HFHS_vs_F.Control_DESeq2.csv&quot;)
+write.csv(all.HFHS_vs_all.Control_outs, file = &quot;output/QCfilt+1_all.HFHS_vs_all.Control.csv&quot;)
+write.csv(control_res_outs, file = &quot;output/QCfilt+1_M.Control_vs_F.Control_DESeq2.csv&quot;)</code></pre>
+<ul>
+<li>Now differential expression analysis is done successfully, lets see
+if we can find any pathways that are enriched using KEGG and
+Reactome.</li>
+</ul>
+</div>
+</div>
+<div id="pathway-analysis" class="section level1">
+<h1>Pathway analysis</h1>
+<ul>
+<li>Will KEGG to perform the pathway analysis.</li>
+</ul>
+<div id="females---hfhs-dam-vs-control-dam-1" class="section level2">
+<h2>Females - HFHS dam vs Control Dam</h2>
+<pre class="r"><code>## FEMALES
+# Data preparation
+f.sig_genes &lt;- subset(female_res, padj &lt; 0.05)
+f.gene_list &lt;- f.sig_genes$log2FoldChange
+names(f.gene_list) &lt;- rownames(f.sig_genes)
+f.gene_list_cleaned &lt;- sub(&quot;\\..*&quot;, &quot;&quot;, names(f.gene_list))
+f.gene_ids &lt;- bitr(f.gene_list_cleaned, fromType = &quot;ENSEMBL&quot;, toType = &quot;ENTREZID&quot;, OrgDb = &quot;org.Mm.eg.db&quot;)
+names(f.gene_list) &lt;- f.gene_ids$ENTREZID
+
+# Reactome pathway enrichment
+f.kegg_enrich &lt;- enrichKEGG(gene = names(f.gene_list), pvalueCutoff = 0.05, organism = &quot;mmu&quot;)</code></pre>
+</div>
+<div id="females---pathway-analysis-results" class="section level2">
+<h2>Females - Pathway analysis results</h2>
+<ul>
+<li>The plot shows the top 10 pathways enriched, the remaining pathways
+can be found in the output csv file.</li>
+</ul>
+<pre class="r"><code># View results
+dotplot(f.kegg_enrich, showCategory=10) + ggtitle(&quot;KEGG Pathway Enrichment, F.HFHS vs F.Control&quot;)</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/fPathwayRes-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>write_csv(f.kegg_enrich@result, file = &quot;output/QCfilt+1_F.HFHS_vs_F.Control_KEGGPathways.csv&quot;)</code></pre>
+</div>
+<div id="males---hfhs-dam-vs-control-dam-1" class="section level2">
+<h2>Males - HFHS dam vs Control dam</h2>
+<pre class="r"><code>## MALES
+# Data preparation
+m.sig_genes &lt;- subset(male_res, padj &lt; 0.05)
+m.gene_list &lt;- m.sig_genes$log2FoldChange
+names(m.gene_list) &lt;- rownames(m.sig_genes)
+m.gene_list_cleaned &lt;- sub(&quot;\\..*&quot;, &quot;&quot;, names(m.gene_list))
+m.gene_ids &lt;- bitr(m.gene_list_cleaned, fromType = &quot;ENSEMBL&quot;, toType = &quot;ENTREZID&quot;, OrgDb = &quot;org.Mm.eg.db&quot;)
+names(m.gene_list) &lt;- m.gene_ids$ENTREZID
+
+# Reactome pathway enrichment
+m.kegg_enrich &lt;- enrichKEGG(gene = names(m.gene_list), pvalueCutoff = 0.05, organism = &quot;mmu&quot;)</code></pre>
+</div>
+<div id="males---pathway-analysis-results" class="section level2">
+<h2>Males - Pathway analysis results</h2>
+<pre class="r"><code># View results
+dotplot(m.kegg_enrich, showCategory=10) + ggtitle(&quot;KEGG Pathway Enrichment, M.HFHS vs M.Control&quot;)</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/mPathwayRes-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>write_csv(m.kegg_enrich@result, file = &quot;output/QCfilt+1_M.HFHS_vs_M.Control_KEGGPathways.csv&quot;)</code></pre>
+</div>
+<div id="all-vs-all---hfhs-dam-vs-control-dam-males-females-together"
+class="section level2">
+<h2>All vs all - HFHS dam vs Control dam (Males &amp; Females
+together)</h2>
+<pre class="r"><code>## ALL VS ALL
+# Data preparation
+all.sig_genes &lt;- subset(all.HFHS_vs_all.Control, padj &lt; 0.05)
+all.gene_list &lt;- all.sig_genes$log2FoldChange
+names(all.gene_list) &lt;- rownames(all.sig_genes)
+all.gene_list_cleaned &lt;- sub(&quot;\\..*&quot;, &quot;&quot;, names(all.gene_list))
+all.gene_ids &lt;- bitr(all.gene_list_cleaned, fromType = &quot;ENSEMBL&quot;, toType = &quot;ENTREZID&quot;, OrgDb = &quot;org.Mm.eg.db&quot;)
+names(all.gene_list) &lt;- all.gene_ids$ENTREZID
+
+# Reactome pathway enrichment
+all.kegg_enrich &lt;- enrichKEGG(gene = names(all.gene_list), pvalueCutoff = 0.05, organism = &quot;mmu&quot;)</code></pre>
+<pre class="r"><code># View results
+dotplot(all.kegg_enrich, showCategory=10) + ggtitle(&quot;KEGG Pathway Enrichment, all.HFHS vs all. Control&quot;)</code></pre>
+<p><img src="figure/RNAseq_QUALITY_FILT+1.Rmd/allPathwayRes-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>write_csv(all.kegg_enrich@result, file = &quot;output/QCfilt+1_ALL.HFHS_vs_ALL.Control_KEGGPathways.csv&quot;)</code></pre>
+<ul>
+<li>Unsure how valid these results are, but putting the males and
+females together has a better looking figure.</li>
+</ul>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.4.0 (2024-04-24)
+Platform: aarch64-apple-darwin20
+Running under: macOS Sonoma 14.4.1
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Australia/Adelaide
+tzcode source: internal
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+ [1] ReactomePA_1.48.0           pathview_1.44.0            
+ [3] DOSE_3.30.1                 clusterProfiler_4.12.0     
+ [5] org.Mm.eg.db_3.19.1         AnnotationDbi_1.66.0       
+ [7] gridExtra_2.3               viridis_0.6.5              
+ [9] viridisLite_0.4.2           RColorBrewer_1.1-3         
+[11] ggrepel_0.9.5               rtracklayer_1.64.0         
+[13] gplots_3.1.3.1              lubridate_1.9.3            
+[15] forcats_1.0.0               stringr_1.5.1              
+[17] dplyr_1.1.4                 purrr_1.0.2                
+[19] readr_2.1.5                 tidyr_1.3.1                
+[21] tibble_3.2.1                tidyverse_2.0.0            
+[23] factoextra_1.0.7            ggplot2_3.5.1              
+[25] DESeq2_1.44.0               SummarizedExperiment_1.34.0
+[27] Biobase_2.64.0              MatrixGenerics_1.16.0      
+[29] matrixStats_1.3.0           GenomicRanges_1.56.0       
+[31] GenomeInfoDb_1.40.0         IRanges_2.38.0             
+[33] S4Vectors_0.42.0            BiocGenerics_0.50.0        
+[35] workflowr_1.7.1            
+
+loaded via a namespace (and not attached):
+  [1] splines_4.4.0            later_1.3.2              BiocIO_1.14.0           
+  [4] bitops_1.0-7             ggplotify_0.1.2          polyclip_1.10-6         
+  [7] graph_1.82.0             XML_3.99-0.16.1          lifecycle_1.0.4         
+ [10] rprojroot_2.0.4          vroom_1.6.5              processx_3.8.4          
+ [13] lattice_0.22-6           MASS_7.3-60.2            magrittr_2.0.3          
+ [16] sass_0.4.9               rmarkdown_2.27           jquerylib_0.1.4         
+ [19] yaml_2.3.8               httpuv_1.6.15            cowplot_1.1.3           
+ [22] DBI_1.2.3                abind_1.4-5              zlibbioc_1.50.0         
+ [25] ggraph_2.2.1             RCurl_1.98-1.14          yulab.utils_0.1.4       
+ [28] rappdirs_0.3.3           tweenr_2.0.3             git2r_0.33.0            
+ [31] GenomeInfoDbData_1.2.12  enrichplot_1.24.0        tidytree_0.4.6          
+ [34] reactome.db_1.88.0       codetools_0.2-20         DelayedArray_0.30.1     
+ [37] ggforce_0.4.2            tidyselect_1.2.1         aplot_0.2.2             
+ [40] UCSC.utils_1.0.0         farver_2.1.2             GenomicAlignments_1.40.0
+ [43] jsonlite_1.8.8           tidygraph_1.3.1          tools_4.4.0             
+ [46] treeio_1.28.0            Rcpp_1.0.12              glue_1.7.0              
+ [49] SparseArray_1.4.8        xfun_0.44                qvalue_2.36.0           
+ [52] withr_3.0.0              fastmap_1.2.0            fansi_1.0.6             
+ [55] callr_3.7.6              caTools_1.18.2           digest_0.6.35           
+ [58] timechange_0.3.0         R6_2.5.1                 gridGraphics_0.5-1      
+ [61] colorspace_2.1-0         GO.db_3.19.1             gtools_3.9.5            
+ [64] RSQLite_2.3.7            utf8_1.2.4               generics_0.1.3          
+ [67] data.table_1.15.4        graphlayouts_1.1.1       httr_1.4.7              
+ [70] S4Arrays_1.4.1           scatterpie_0.2.2         graphite_1.50.0         
+ [73] whisker_0.4.1            pkgconfig_2.0.3          gtable_0.3.5            
+ [76] blob_1.2.4               XVector_0.44.0           shadowtext_0.1.3        
+ [79] htmltools_0.5.8.1        fgsea_1.30.0             scales_1.3.0            
+ [82] png_0.1-8                ggfun_0.1.5              knitr_1.47              
+ [85] rstudioapi_0.16.0        tzdb_0.4.0               reshape2_1.4.4          
+ [88] rjson_0.2.21             nlme_3.1-164             curl_5.2.1              
+ [91] org.Hs.eg.db_3.19.1      cachem_1.1.0             KernSmooth_2.23-24      
+ [94] parallel_4.4.0           HDO.db_0.99.1            restfulr_0.0.15         
+ [97] pillar_1.9.0             grid_4.4.0               vctrs_0.6.5             
+[100] promises_1.3.0           Rgraphviz_2.48.0         KEGGgraph_1.64.0        
+[103] evaluate_0.23            cli_3.6.2                locfit_1.5-9.9          
+[106] compiler_4.4.0           Rsamtools_2.20.0         rlang_1.1.4             
+[109] crayon_1.5.2             labeling_0.4.3           ps_1.7.6                
+[112] getPass_0.2-4            plyr_1.8.9               fs_1.6.4                
+[115] stringi_1.8.4            BiocParallel_1.38.0      munsell_0.5.1           
+[118] Biostrings_2.72.1        lazyeval_0.2.2           GOSemSim_2.30.0         
+[121] Matrix_1.7-0             hms_1.1.3                patchwork_1.2.0         
+[124] bit64_4.0.5              KEGGREST_1.44.0          highr_0.11              
+[127] igraph_2.0.3             memoise_2.0.1            bslib_0.7.0             
+[130] ggtree_3.12.0            fastmatch_1.1-4          bit_4.0.5               
+[133] ape_5.8                  gson_0.1.0              </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
